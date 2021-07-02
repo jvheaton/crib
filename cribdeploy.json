@@ -337,12 +337,12 @@
         
         // Powershell DSC Scripts
         "dscModules": "[uri(parameters('_artifactsLocation'), concat('scripts/azure/Install-DSC-Modules.ps1', parameters('_artifactsLocationSasToken')))]",
-        "createADForestScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/active-directory/Create-AD-ADFS.ps1', parameters('_artifactsLocationSasToken')))]",
-        "joinDomainScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/active-directory/Join-Domain.ps1', parameters('_artifactsLocationSasToken')))]",
-        "importPfxCertScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/mis/Import-PfxCert.ps1', parameters('_artifactsLocationSasToken')))]",
-        "installADFSScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/active-directory/Install-ADFS.ps1', parameters('_artifactsLocationSasToken')))]",
-        "installSysmonScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/software/Install-Sysmon.ps1', parameters('_artifactsLocationSasToken')))]",
-        "installAADConnectScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/mis/Install-AADConnect.ps1', parameters('_artifactsLocationSasToken')))]",
+        "createADForestScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/active-directory/Create-AD-ADFS.zip', parameters('_artifactsLocationSasToken')))]",
+        "joinDomainScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/active-directory/Join-Domain.zip', parameters('_artifactsLocationSasToken')))]",
+        "importPfxCertScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/mis/Import-PfxCert.zip', parameters('_artifactsLocationSasToken')))]",
+        "installADFSScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/active-directory/Install-ADFS.zip', parameters('_artifactsLocationSasToken')))]",
+        "installSysmonScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/software/Install-Sysmon.zip', parameters('_artifactsLocationSasToken')))]",
+        "installAADConnectScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/mis/Install-AADConnect.zip', parameters('_artifactsLocationSasToken')))]",
 
         // Virtual Machine Properties
         "copy": [
