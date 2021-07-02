@@ -328,7 +328,7 @@
         
         // Custom Scripts
         "initialSettingsScript": "[uri(parameters('_artifactsLocation'), concat('scripts/azure/Set-Initial-Settings.ps1', parameters('_artifactsLocationSasToken')))]",
-        "prepareBoxScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/mis/prepare-Box.ps1', parameters('_artifactsLocationSasToken')))]",
+        "prepareBoxScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/mis/prepare-box.ps1', parameters('_artifactsLocationSasToken')))]",
         "setSecurityAuditingScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/auditing/Enable-WinAuditCategories.ps1', parameters('_artifactsLocationSasToken')))]",
         "setPowerShellLogging": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/auditing/Enable-PowerShell-Logging.ps1', parameters('_artifactsLocationSasToken')))]",
         "saclModule": "https://raw.githubusercontent.com/OTRF/Set-AuditRule/master/Set-AuditRule.ps1",
