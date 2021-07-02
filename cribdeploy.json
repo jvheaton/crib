@@ -839,7 +839,7 @@
                     "virtualNetworkName": {
                         "value": "[variables('btvirtualNetworkName')]"
                     },
-                    "btvirtualNetworkAddressRange": {
+                    "virtualNetworkAddressRange": {
                         "value": "[variables('btvirtualNetworkAddressRange')]"
                     },
                     "subnets": {
