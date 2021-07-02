@@ -11,12 +11,14 @@
         },
         "adminUsername": {
             "type": "string",
+            "defaultValue": "gastori",
             "metadata": {
                 "description": "Username for the Virtual Machine."
             }
         },
         "adminPassword": {
             "type": "securestring",
+            "defaultValue": "P@ssword01",
             "minLength": 12,
             "metadata": {
                 "description": "Password for the all Virtual machines. The password must be at least 12 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter"
@@ -24,12 +26,14 @@
         },
         "adfsUsername": {
             "type": "string",
+            "defaultValue": "gastori",
             "metadata": {
                 "description": "ADFS user account name"
             }
         },
         "adfsPassword": {
             "type": "securestring",
+            "defaultValue": "P@ssword01",
             "minLength": 12,
             "metadata": {
                 "description": "Password for ADFS user account. The password must be at least 12 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter"
@@ -69,26 +73,40 @@
             },
             "defaultValue": "*"
         },
-        "azureBastionHostName": {
+        "btazureBastionHostName": {
             "type": "string",
             "metadata": {
                 "description": "Name of Azure Bastion Host assigned to the Virtual network in this template"
             },
-            "defaultValue": "AzureBastionHost"
+            "defaultValue": "btAzureBastionHost"
         },
-        "azureBastionSubnetRange": {
+        "btazureBastionSubnetRange": {
             "type": "string",
             "metadata": {
                 "description": "Address Range of the Azure Bastion service"
             },
             "defaultValue": "192.168.3.0/27"
         },
+        "rtazureBastionHostName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of Azure Bastion Host assigned to the Virtual network in this template"
+            },
+            "defaultValue": "rtAzureBastionHost"
+        },
+        "rtazureBastionSubnetRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Address Range of the Azure Bastion service"
+            },
+            "defaultValue": "192.169.3.0/27"
+        },
         "domainFQDN": {
             "type": "string",
             "metadata": {
                 "description": "The FQDN of the Active Directory Domain to be created"
             },
-            "defaultValue": "blacksmith.local"
+            "defaultValue": "gastoricyber.local"
         },
         "numberOfWorkstations": {
             "type": "int",
@@ -104,7 +122,7 @@
             "metadata": {
                 "description": "Prefix for the name of your virtual machine. Template will add a number starting from 5."
             },
-            "defaultValue": "WORKSTATION"
+            "defaultValue": "vmWKS"
         },
         "windowsDesktopSKU": {
             "type": "string",
@@ -179,7 +197,7 @@
             "metadata": {
                 "description": "Name of the Virtual Network"
             },
-            "defaultValue": "vnet-win"
+            "defaultValue": "btvnet-win"
         },
         "btvirtualNetworkAddressRange": {
             "type": "string",
@@ -188,19 +206,47 @@
             },
             "defaultValue": "192.168.0.0/16"
         },
-        "subnetRange": {
+        "rtvirtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Virtual Network"
+            },
+            "defaultValue": "rtvnet-win"
+        },  
+        "rtvirtualNetworkAddressRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Address Range of the virtual network"
+            },
+            "defaultValue": "192.169.0.0/16"
+        },      
+        "btsubnetRange": {
             "type": "string",
             "metadata": {
                 "description": "Address Range of the subnet"
             },
             "defaultValue": "192.168.2.0/24"
         },
-        "subnetName": {
+        "btsubnetName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the subnet"
             },
-            "defaultValue": "snet-win"
+            "defaultValue": "btsnet-win"
+        },
+        "rtsubnetRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Address Range of the subnet"
+            },
+            "defaultValue": "192.169.2.0/24"
+        },
+        "rtsubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the subnet"
+            },
+            "defaultValue": "rtsnet-win"
         },
         "enableSysmon": {
             "type": "bool",
@@ -246,6 +292,7 @@
         },
         "pfxCertPassword": {
             "type": "securestring",
+            "defaultValue": "P@ssword01",
             "metadata": {
                 "description": "Password to export and import PFX certificate. If it is a trusted CA signed certificate, the password will be used to import the certificate."
             }
@@ -282,11 +329,17 @@
         // Virtual Network Setup
         "btvirtualNetworkName": "[parameters('btvirtualNetworkName')]",
         "btvirtualNetworkAddressRange": "[parameters('btvirtualNetworkAddressRange')]",
-        "subnetName": "[parameters('subnetName')]",
-        "subnetRange": "[parameters('subnetRange')]",
-        "vmPrivateIPPrefixArray": "[take(split(variables('subnetRange'),'.'),3)]",
-        "vmPrivateIPAddresPrefix": "[format('{0}.{1}.{2}.',variables('vmPrivateIPPrefixArray')[0], variables('vmPrivateIPPrefixArray')[1], variables('vmPrivateIPPrefixArray')[2])]",
-        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('btvirtualNetworkName'), variables('subnetName'))]",
+        "rtvirtualNetworkName": "[parameters('rtvirtualNetworkName')]",
+        "rtvirtualNetworkAddressRange": "[parameters('rtvirtualNetworkAddressRange')]",
+        "btsubnetName": "[parameters('btsubnetName')]",
+        "btsubnetRange": "[parameters('btsubnetRange')]",
+        "rtsubnetName": "[parameters('rtsubnetName')]",
+        "rtsubnetRange": "[parameters('rtsubnetRange')]",
+        "btvmPrivateIPPrefixArray": "[take(split(variables('btsubnetRange'),'.'),3)]",
+        "btvmPrivateIPAddresPrefix": "[format('{0}.{1}.{2}.',variables('btvmPrivateIPPrefixArray')[0], variables('btvmPrivateIPPrefixArray')[1], variables('btvmPrivateIPPrefixArray')[2])]",
+        "rtvmPrivateIPPrefixArray": "[take(split(variables('rtsubnetRange'),'.'),3)]",
+        "rtvmPrivateIPAddresPrefix": "[format('{0}.{1}.{2}.',variables('rtvmPrivateIPPrefixArray')[0], variables('rtvmPrivateIPPrefixArray')[1], variables('rtvmPrivateIPPrefixArray')[2])]",
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('btvirtualNetworkName'), variables('btsubnetName'))]",
         "nsg-default-name": "nsg-rdp-allow",
         "nsg-id": {
             "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-default-name'))]"
@@ -294,9 +347,16 @@
         "networkSecurityGroup": "[if(equals(parameters('remoteAccessMode'), 'AllowPublicIP'), variables('nsg-id'), json('null'))]",
         "subnets": [
             {
-                "name": "[variables('subnetName')]",
+                "name": "[variables('btsubnetName')]",
                 "properties": {
-                    "addressPrefix": "[variables('subnetRange')]",
+                    "addressPrefix": "[variables('btsubnetRange')]",
+                    "networkSecurityGroup": "[variables('networkSecurityGroup')]"
+                }
+            },
+            {
+                "name": "[variables('rtsubnetName')]",
+                "properties": {
+                    "addressPrefix": "[variables('btsubnetRange')]",
                     "networkSecurityGroup": "[variables('networkSecurityGroup')]"
                 }
             }
@@ -308,7 +368,16 @@
             {
                 "name": "[variables('bastionSubnetName')]",
                 "properties": {
-                    "addressPrefix": "[parameters('azureBastionSubnetRange')]",
+                    "addressPrefix": "[parameters('btazureBastionSubnetRange')]",
+                    "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-bastion-host-name'))]"
+                    }
+                }
+            },
+            {
+                "name": "[variables('bastionSubnetName')]",
+                "properties": {
+                    "addressPrefix": "[parameters('rtazureBastionSubnetRange')]",
                     "networkSecurityGroup": {
                         "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-bastion-host-name'))]"
                     }
@@ -354,7 +423,7 @@
                     "vmName": "[concat(parameters('vmNamePrefix'),copyIndex('allWinWKS',6))]",
                     "os": "windows",
                     "subnetref": "[variables('subnetRef')]",
-                    "ipAddress": "[concat(variables('vmPrivateIPAddresPrefix'),copyIndex('allWinWKS',6))]",
+                    "ipAddress": "[concat(variables('btvmPrivateIPAddresPrefix'),copyIndex('allWinWKS',6))]",
                     "vmSize": "[parameters('vmSize')]",
                     "publisher": "MicrosoftWindowsDesktop",
                     "offer": "Windows-10",
@@ -370,7 +439,7 @@
                 "vmName": "DC01",
                 "os": "windows",
                 "subnetref": "[variables('subnetRef')]",
-                "ipAddress": "[concat(variables('vmPrivateIPAddresPrefix'),'4')]",
+                "ipAddress": "[concat(variables('btvmPrivateIPAddresPrefix'),'4')]",
                 "vmSize": "[parameters('vmSize')]",
                 "publisher": "MicrosoftWindowsServer",
                 "offer": "WindowsServer",
@@ -385,7 +454,7 @@
                 "vmName": "ADFS01",
                 "os": "windows",
                 "subnetref": "[variables('subnetRef')]",
-                "ipAddress": "[concat(variables('vmPrivateIPAddresPrefix'),'5')]",
+                "ipAddress": "[concat(variables('btvmPrivateIPAddresPrefix'),'5')]",
                 "vmSize": "[parameters('vmSize')]",
                 "publisher": "MicrosoftWindowsServer",
                 "offer": "WindowsServer",
@@ -552,11 +621,44 @@
             }
         },
         {
+            //Read Team VNET
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-02-01",
+            "name": "[variables('rtvirtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-default-name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-bastion-host-name'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('rtvirtualNetworkAddressRange')]"
+                    ]
+                },
+                "subnets": "[variables('allSubnets')]"
+            }
+        },
+        {
             //Blue Team PIP for Az Bastion
             "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2018-11-01",
-            "name": "[concat('pip-', parameters('azureBastionHostName'))]",
+            "name": "[concat('btpip-', parameters('btazureBastionHostName'))]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            //Read Team PIP for Az Bastion
+            "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-11-01",
+            "name": "[concat('rtpip-', parameters('rtazureBastionHostName'))]",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "Standard"
@@ -570,10 +672,10 @@
             "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
             "type": "Microsoft.Network/bastionHosts",
             "apiVersion": "2020-05-01",
-            "name": "[parameters('azureBastionHostName')]",
+            "name": "[concat('bt', parameters('btazureBastionHostName'))]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses/', concat('pip-', parameters('azureBastionHostName')))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses/', concat('btpip-', parameters('btazureBastionHostName')))]",
                 "[resourceId('Microsoft.Network/virtualNetworks/', variables('btvirtualNetworkName'))]"
             ],
             "properties": {
@@ -583,7 +685,35 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat('pip-', parameters('azureBastionHostName')))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat('btpip-', parameters('btazureBastionHostName')))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('btvirtualNetworkName'), variables('bastionSubnetName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            //Read Team Az Bastion
+            "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
+            "type": "Microsoft.Network/bastionHosts",
+            "apiVersion": "2020-05-01",
+            "name": "[concat('rt', parameters('rtazureBastionHostName'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses/', concat('rtpip-', parameters('rtazureBastionHostName')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('rtvirtualNetworkName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "IpConf",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat('rtpip-', parameters('rtazureBastionHostName')))]"
                             },
                             "subnet": {
                                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('btvirtualNetworkName'), variables('bastionSubnetName'))]"
@@ -639,572 +769,6 @@
                         }
                     }
                 ]
-            }
-        },
-        {
-            //BT VMs
-            "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2018-10-01",
-            "name": "[variables('allEndpoints')[copyIndex('vmVMCopy')].vmName]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-                "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic-', variables('allEndpoints')[copyIndex('vmVMCopy')].vmName))]"
-            ],
-            "copy": {
-                "name": "vmVMCopy",
-                "count": "[length(variables('allEndpoints'))]"
-            },
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[variables('allEndpoints')[copyIndex('vmVMCopy')].vmSize]"
-                },
-                "osProfile": {
-                    "computerName": "[variables('allEndpoints')[copyIndex('vmVMCopy')].vmName]",
-                    "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]"
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "[variables('allEndpoints')[copyIndex('vmVMCopy')].publisher]",
-                        "offer": "[variables('allEndpoints')[copyIndex('vmVMCopy')].offer]",
-                        "sku": "[variables('allEndpoints')[copyIndex('vmVMCopy')].sku]",
-                        "version": "[variables('allEndpoints')[copyIndex('vmVMCopy')].version]"
-                    },
-                    "osDisk": {
-                        "createOption": "FromImage"
-                    },
-                    "dataDisks": []
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-', variables('allEndpoints')[copyIndex('vmVMCopy')].vmName))]"
-                        }
-                    ]
-                },
-                "diagnosticsProfile": {
-                    "bootDiagnostics": {
-                        "enabled": true,
-                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
-                    }
-                }
-            }
-        },
-        {
-            //Extensions for WKS
-            "name": "[concat(variables('allWinWKS')[copyIndex('InitialSetUpWKSCopy')].vmName, '/', variables('allWinWKS')[copyIndex('InitialSetUpWKSCopy')].extensionName)]",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "apiVersion": "2019-12-01",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('allWinWKS')[copyIndex('InitialSetUpWKSCopy')].vmName)]"
-            ],
-            "copy": {
-                "name": "InitialSetUpWKSCopy",
-                "count": "[length(variables('allWinWKS'))]"
-            },
-            "properties": {
-                "publisher": "Microsoft.Compute",
-                "type": "CustomScriptExtension",
-                "typeHandlerVersion": "1.8",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                    "fileUris": "[variables('initialSetUpScripts')]",
-                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./Set-Initial-Settings.ps1',' ','-SetupType Endpoint')]"
-                },
-                "protectedSettings": {}
-            }
-        },
-        {
-            //Extensions for DC
-            "name": "[concat(variables('domainController')[0].vmName, '/', variables('domainController')[0].extensionName)]",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "apiVersion": "2019-12-01",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/', variables('domainController')[0].vmName)]"
-            ],
-            "properties": {
-                "publisher": "Microsoft.Compute",
-                "type": "CustomScriptExtension",
-                "typeHandlerVersion": "1.8",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                    "fileUris": "[variables('initialDCADFSScripts')]",
-                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./Set-Initial-Settings.ps1',' ', '-SetupType DC',' ','-PfxCertName',' ',parameters('pfxCertName'),' ','-CertificateType',' ',parameters('certificateType'))]"
-                },
-                "protectedSettings": {}
-            }
-        },
-        {
-            //Extensions for ADFS
-            "name": "[concat(variables('adfsServer')[0].vmName, '/', variables('adfsServer')[0].extensionName)]",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "apiVersion": "2019-12-01",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/', variables('adfsServer')[0].vmName)]"
-            ],
-            "properties": {
-                "publisher": "Microsoft.Compute",
-                "type": "CustomScriptExtension",
-                "typeHandlerVersion": "1.8",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                    "fileUris": "[variables('initialDCADFSScripts')]",
-                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./Set-Initial-Settings.ps1',' ','-SetupType ADFS',' ','-PfxCertName',' ',parameters('pfxCertName'),' ','-CertificateType',' ',parameters('certificateType'))]"
-                },
-                "protectedSettings": {}
-            }
-        },
-        {
-            //Deployment of the AD Forest using linked template
-            "name": "CreateADForest",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('domainController')[0].vmName, variables('domainController')[0].extensionName)]"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('createADTemplateUri')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "vmName":   {
-                        "value": "[variables('domainController')[0].vmName]"
-                    },
-                    "createADForestScript": {
-                        "value": "[variables('createADForestScript')]"
-                    },
-                    "domainFQDN": {
-                        "value": "[parameters('domainFQDN')]"
-                    },
-                    "federationServiceName": {
-                        "value": "[variables('federationServiceName')]"
-                    },
-                    "adfsIPAddress": {
-                        "value": "[variables('adfsServer')[0].ipAddress]"
-                    },
-                    "adminUsername": {
-                        "value": "[parameters('adminUsername')]"
-                    },
-                    "adminPassword": {
-                        "value": "[parameters('adminPassword')]"
-                    },
-                    "adfsUsername": {
-                        "value": "[parameters('adfsUsername')]"
-                    },
-                    "adfsPassword": {
-                        "value": "[parameters('adfsPassword')]"
-                    },
-                    "domainUsers": {
-                        "value": "[parameters('domainUsers')]"
-                    },
-                    "pfxCertName": {
-                        "value": "[parameters('pfxCertName')]"
-                    },
-                    "certificateType": {
-                        "value": "[parameters('certificateType')]"
-                    },
-                    "pfxCertPassword": {
-                        "value": "[parameters('pfxCertPassword')]"
-                    },
-                    "smbSharedFolder": {
-                        "value": "[variables('smbSharedFolder')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    }
-                }
-            }
-        },
-        {
-            //Deployment to update DNS in VNET using linked template
-            "name": "UpdateVNetDNS",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "dependsOn": [
-                "CreateADForest"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('updateDNSServerScript')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "virtualNetworkName": {
-                        "value": "[variables('btvirtualNetworkName')]"
-                    },
-                    "virtualNetworkAddressRange": {
-                        "value": "[variables('btvirtualNetworkAddressRange')]"
-                    },
-                    "subnets": {
-                        "value": "[variables('allSubnets')]"
-                    },
-                    "DNSServerAddress": {
-                        "value": [
-                            "[variables('domainController')[0].ipAddress]"
-                        ]
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    }
-                }
-            }
-        },
-        {
-            //Deployment of the DC Import PFX Cert using linked template
-            "condition": "[equals(parameters('certificateType'),'TrustedSigned')]",
-            "name": "DCImportPfxCert",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "dependsOn": [
-                "UpdateVNetDNS"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('importPfxCertTemplateUri')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "vmName":   {
-                        "value": "[variables('domainController')[0].vmName]"
-                    },
-                    "importPfxCertScript": {
-                        "value": "[variables('importPfxCertScript')]"
-                    },
-                    "pfxCertPassword": {
-                        "value": "[parameters('pfxCertPassword')]"
-                    },
-                    "pfxCertPath": {
-                        "value": "[variables('pfxCertPath')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    }
-                }
-            }
-        },
-        {
-            //Deployment of WKS join domain using linked template
-            "name": "[concat(variables('allWinWKS')[copyIndex('vmDomainJoinCopy')].vmName, '-joinDomain')]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "dependsOn": [
-                "InitialSetUpWKSCopy",
-                "UpdateVNetDNS"
-            ],
-            "copy": {
-                "name": "vmDomainJoinCopy",
-                "count": "[length(variables('allWinWKS'))]"
-            },
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('joinDomainTemplateUri')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "vmName":   {
-                        "value": "[variables('allWinWKS')[copyIndex('vmDomainJoinCopy')].vmName]"
-                    },
-                    "joinDomainScript": {
-                        "value": "[variables('joinDomainScript')]"
-                    },
-                    "domainFQDN": {
-                        "value": "[parameters('domainFQDN')]"
-                    },
-                    "adminUsername": {
-                        "value": "[parameters('adminUsername')]"
-                    },
-                    "adminPassword": {
-                        "value": "[parameters('adminPassword')]"
-                    },
-                    "dcIpAddress": {
-                        "value": "[variables('domainController')[0].ipAddress]"
-                    },
-                    "joinOU": {
-                        "value": "[variables('workstationsOUPath')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    }
-                }
-            }
-        },
-        {
-            //Deployment of ADFS join domain using linked template
-            "name": "[concat(variables('adfsServer')[0].vmName, '-joinDomain')]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('adfsServer')[0].vmName, variables('adfsServer')[0].extensionName)]",
-                "UpdateVNetDNS"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('joinDomainTemplateUri')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "vmName":   {
-                        "value": "[variables('adfsServer')[0].vmName]"
-                    },
-                    "joinDomainScript": {
-                        "value": "[variables('joinDomainScript')]"
-                    },
-                    "domainFQDN": {
-                        "value": "[parameters('domainFQDN')]"
-                    },
-                    "adminUsername": {
-                        "value": "[parameters('adminUsername')]"
-                    },
-                    "adminPassword": {
-                        "value": "[parameters('adminPassword')]"
-                    },
-                    "dcIpAddress": {
-                        "value": "[variables('domainController')[0].ipAddress]"
-                    },
-                    "joinOU": {
-                        "value": "[variables('serversOUPath')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    }
-                }
-            }
-        },
-        {
-            //Deployment of the ADFS Import PFX Cert using linked template
-            "name": "ADFSImportPfxCert",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "dependsOn": [
-                "[concat(variables('adfsServer')[0].vmName, '-joinDomain')]"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('importPfxCertTemplateUri')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "vmName":   {
-                        "value": "[variables('adfsServer')[0].vmName]"
-                    },
-                    "importPfxCertScript": {
-                        "value": "[variables('importPfxCertScript')]"
-                    },
-                    "pfxCertPassword": {
-                        "value": "[parameters('pfxCertPassword')]"
-                    },
-                    "pfxCertPath": {
-                        "value": "[variables('pfxCertPath')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    }
-                }
-            }
-        },
-        {
-            //Deployment of the Install ADFS using linked template
-            "name": "InstallADFS",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "dependsOn": [
-                "ADFSImportPfxCert"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('installADFSTemplateUri')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "vmName":   {
-                        "value": "[variables('adfsServer')[0].vmName]"
-                    },
-                    "installADFSScript": {
-                        "value": "[variables('installADFSScript')]"
-                    },
-                    "domainFQDN": {
-                        "value": "[parameters('domainFQDN')]"
-                    },
-                    "federationServiceName": {
-                        "value": "[variables('federationServiceName')]"
-                    },
-                    "adminUsername": {
-                        "value": "[parameters('adminUsername')]"
-                    },
-                    "adminPassword": {
-                        "value": "[parameters('adminPassword')]"
-                    },
-                    "adfsUsername": {
-                        "value": "[parameters('adfsUsername')]"
-                    },
-                    "adfsPassword": {
-                        "value": "[parameters('adfsPassword')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    }
-                }
-            }
-        },
-        {
-            //Deployment of the Install Sysmon using linked template
-            "condition": "[parameters('enableSysmon')]",
-            "name": "[concat(variables('allWinWKS')[copyIndex('vmSysmonSetUpCopy')].vmName, '-installSysmon')]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "dependsOn": [
-                "vmDomainJoinCopy"
-            ],
-            "copy": {
-                "name": "vmSysmonSetupCopy",
-                "count": "[length(variables('allWinWKS'))]"
-            },
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('sysmonInstallTemplateUri')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "vmName":   {
-                        "value": "[variables('allWinWKS')[copyIndex('vmSysmonSetupCopy')].vmName]"
-                    },
-                    "installSysmonScript": {
-                        "value": "[variables('installSysmonScript')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    }
-                }
-            }
-        },
-        {
-            //Deployment of the enabling Sysmon on DC using linked template
-            "condition": "[parameters('enableSysmon')]",
-            "name": "[concat(variables('domainController')[0].vmName, '-installSysmon')]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "dependsOn": [
-                "UpdateVNetDNS",
-                "DCImportPfxCert"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('sysmonInstallTemplateUri')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "vmName":   {
-                        "value": "[variables('domainController')[0].vmName]"
-                    },
-                    "installSysmonScript": {
-                        "value": "[variables('installSysmonScript')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    }
-                }
-            }
-        },
-        {
-            //Deployment of the enabling Sysmon on ADFS using linked template
-            "condition": "[parameters('enableSysmon')]",
-            "name": "[concat(variables('adfsServer')[0].vmName, '-installSysmon')]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "dependsOn": [
-                "InstallADFS"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('sysmonInstallTemplateUri')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "vmName":   {
-                        "value": "[variables('adfsServer')[0].vmName]"
-                    },
-                    "installSysmonScript": {
-                        "value": "[variables('installSysmonScript')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    }
-                }
-            }
-        },
-        {
-            //Deployment of the enabling MMA on all VMs using linked template
-            "condition": "[parameters('enableMonitoringAgent')]",
-            "name": "[concat(variables('allEndpoints')[copyIndex('vmMMASetUpCopy')].vmName, '/OMSExtension')]",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "apiVersion": "2019-12-01",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "vmDomainJoinCopy",
-                "InstallADFS"
-            ],
-            "copy": {
-                "name": "vmMMASetUpCopy",
-                "count": "[length(variables('allEndpoints'))]"
-            },
-            "properties": {
-                "publisher": "Microsoft.EnterpriseCloud.Monitoring",
-                "type": "MicrosoftMonitoringAgent",
-                "typeHandlerVersion": "1.0",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                    "workspaceId": "[parameters('workspaceId')]"
-                },
-                "protectedSettings": {
-                    "workspaceKey": "[parameters('workspaceKey')]"
-                }
-            }
-        },
-        {
-            //Deployment of Install AADCOnnect
-            "condition": "[parameters('enableAADConnect')]",
-            "name": "[concat(variables('domainController')[0].vmName, '-installAADConnect')]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "dependsOn": [
-                "vmDomainJoinCopy",
-                "InstallADFS",
-                "DCImportPfxCert",
-                "[concat(variables('domainController')[0].vmName, '-installSysmon')]",
-                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('domainController')[0].vmName, 'OMSExtension')]"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('installAADConnectTemplateUri')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "vmName":   {
-                        "value": "[variables('domainController')[0].vmName]"
-                    },
-                    "installAADConnectScript": {
-                        "value": "[variables('installAADConnectScript')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    }
-                }
             }
         }
     ],
