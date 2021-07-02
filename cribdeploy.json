@@ -333,7 +333,7 @@
         "setPowerShellLogging": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/auditing/Enable-PowerShell-Logging.ps1', parameters('_artifactsLocationSasToken')))]",
         "saclModule": "https://raw.githubusercontent.com/OTRF/Set-AuditRule/master/Set-AuditRule.ps1",
         "setSACLScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/auditing/Set-SACLs.ps1', parameters('_artifactsLocationSasToken')))]",
-        "setWallPaperScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/misc/Set-WallPaper.ps1', parameters('_artifactsLocationSasToken')))]",
+        "setWallPaperScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/mis/Set-WallPaper.ps1', parameters('_artifactsLocationSasToken')))]",
         
         // Powershell DSC Scripts
         "dscModules": "[uri(parameters('_artifactsLocation'), concat('scripts/azure/Install-DSC-Modules.ps1', parameters('_artifactsLocationSasToken')))]",
