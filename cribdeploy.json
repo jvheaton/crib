@@ -439,7 +439,8 @@
             "properties": {}
         },
         {
-            "condition": "[equals(parameters('remoteAccessMode'), 'AllowPublicIP')]", //This NSG is created only when Remote Access Mode is selected. Needs a Public IP
+            //This NSG is created only when Remote Access Mode is selected. Needs a Public IP only
+            "condition": "[equals(parameters('remoteAccessMode'), 'AllowPublicIP')]", 
             "comments": "Default Network Security Group for Windows endpoints",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-08-01",
