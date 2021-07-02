@@ -345,14 +345,16 @@
             "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-default-name'))]"
         },
         "networkSecurityGroup": "[if(equals(parameters('remoteAccessMode'), 'AllowPublicIP'), variables('nsg-id'), json('null'))]",
-        "subnets": [
+        "btsubnets": [
             {
                 "name": "[variables('btsubnetName')]",
                 "properties": {
                     "addressPrefix": "[variables('btsubnetRange')]",
                     "networkSecurityGroup": "[variables('networkSecurityGroup')]"
                 }
-            },
+            }
+        ],
+        "rtsubnets": [
             {
                 "name": "[variables('rtsubnetName')]",
                 "properties": {
@@ -364,7 +366,7 @@
         //Bastion Host Network
         "bastionSubnetName": "AzureBastionSubnet",
         "nsg-bastion-host-name": "nsg-bastion-host",
-        "azureBastionSubnet": [
+        "btazureBastionSubnet": [
             {
                 "name": "[variables('bastionSubnetName')]",
                 "properties": {
@@ -373,7 +375,9 @@
                         "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-bastion-host-name'))]"
                     }
                 }
-            },
+            }
+        ],
+        "rtazureBastionSubnet": [
             {
                 "name": "[variables('bastionSubnetName')]",
                 "properties": {
@@ -384,7 +388,8 @@
                 }
             }
         ],
-        "allSubnets": "[if(equals(parameters('remoteAccessMode'),'AzureBastionHost'), concat(variables('subnets'), variables('azureBastionSubnet')), variables('subnets'))]",
+        "btallSubnets": "[if(equals(parameters('remoteAccessMode'),'AzureBastionHost'), concat(variables('btsubnets'), variables('btazureBastionSubnet')), variables('btsubnets'))]",
+        "rtallSubnets": "[if(equals(parameters('remoteAccessMode'),'AzureBastionHost'), concat(variables('rtsubnets'), variables('rtazureBastionSubnet')), variables('rtsubnets'))]",
 
         // Nested Templates
         "updateDNSServerScript": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet-dns-server.json', parameters('_artifactsLocationSasToken')))]",
@@ -617,7 +622,7 @@
                         "[variables('btvirtualNetworkAddressRange')]"
                     ]
                 },
-                "subnets": "[variables('allSubnets')]"
+                "subnets": "[variables('btallSubnets')]"
             }
         },
         {
@@ -636,7 +641,7 @@
                         "[variables('rtvirtualNetworkAddressRange')]"
                     ]
                 },
-                "subnets": "[variables('allSubnets')]"
+                "subnets": "[variables('rtallSubnets')]"
             }
         },
         {
