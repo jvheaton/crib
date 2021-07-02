@@ -464,7 +464,7 @@
             }
         },
         {
-            //This NSG is created when Az Bastion is selected as a remote connectivity option
+            //This NSG is created when Az Bastion is selected as a remote connectivity option only
             "condition": "[equals(parameters('remoteAccessMode'), 'AzureBastionHost')]", 
             "comments": "Default Network Security Group for Azure Bastion Host",
             "type": "Microsoft.Network/networkSecurityGroups",
