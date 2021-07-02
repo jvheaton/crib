@@ -78,7 +78,7 @@
             "metadata": {
                 "description": "Name of Azure Bastion Host assigned to the Virtual network in this template"
             },
-            "defaultValue": "btAzureBastionHost"
+            "defaultValue": "AzureBastionHost"
         },
         "btazureBastionSubnetRange": {
             "type": "string",
@@ -92,7 +92,7 @@
             "metadata": {
                 "description": "Name of Azure Bastion Host assigned to the Virtual network in this template"
             },
-            "defaultValue": "rtAzureBastionHost"
+            "defaultValue": "AzureBastionHost"
         },
         "rtazureBastionSubnetRange": {
             "type": "string",
@@ -721,7 +721,7 @@
                                 "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat('rtpip-', parameters('rtazureBastionHostName')))]"
                             },
                             "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('btvirtualNetworkName'), variables('bastionSubnetName'))]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('rtvirtualNetworkName'), variables('bastionSubnetName'))]"
                             }
                         }
                     }
