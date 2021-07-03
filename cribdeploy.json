@@ -73,7 +73,7 @@
             },
             "defaultValue": "*"
         },
-        "btazureBastionHostName": {
+        "azureBastionHostName": {
             "type": "string",
             "metadata": {
                 "description": "Name of Azure Bastion Host assigned to the Virtual network in this template"
@@ -86,13 +86,6 @@
                 "description": "Address Range of the Azure Bastion service"
             },
             "defaultValue": "192.168.3.0/27"
-        },
-        "rtazureBastionHostName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of Azure Bastion Host assigned to the Virtual network in this template"
-            },
-            "defaultValue": "AzureBastionHost"
         },
         "rtazureBastionSubnetRange": {
             "type": "string",
@@ -649,7 +642,7 @@
             "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2018-11-01",
-            "name": "[concat('btpip-', parameters('btazureBastionHostName'))]",
+            "name": "[concat('btpip-', parameters('azureBastionHostName'))]",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "Standard"
@@ -663,7 +656,7 @@
             "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2018-11-01",
-            "name": "[concat('rtpip-', parameters('rtazureBastionHostName'))]",
+            "name": "[concat('rtpip-', parameters('azureBastionHostName'))]",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "Standard"
@@ -677,10 +670,10 @@
             "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
             "type": "Microsoft.Network/bastionHosts",
             "apiVersion": "2020-05-01",
-            "name": "[concat('bt', parameters('btazureBastionHostName'))]",
+            "name": "[concat('bt', parameters('azureBastionHostName'))]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses/', concat('btpip-', parameters('btazureBastionHostName')))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses/', concat('btpip-', parameters('azureBastionHostName')))]",
                 "[resourceId('Microsoft.Network/virtualNetworks/', variables('btvirtualNetworkName'))]"
             ],
             "properties": {
@@ -690,7 +683,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat('btpip-', parameters('btazureBastionHostName')))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat('btpip-', parameters('azureBastionHostName')))]"
                             },
                             "subnet": {
                                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('btvirtualNetworkName'), variables('bastionSubnetName'))]"
@@ -705,10 +698,10 @@
             "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
             "type": "Microsoft.Network/bastionHosts",
             "apiVersion": "2020-05-01",
-            "name": "[concat('rt', parameters('rtazureBastionHostName'))]",
+            "name": "[concat('rt', parameters('azureBastionHostName'))]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses/', concat('rtpip-', parameters('rtazureBastionHostName')))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses/', concat('rtpip-', parameters('azureBastionHostName')))]",
                 "[resourceId('Microsoft.Network/virtualNetworks/', variables('rtvirtualNetworkName'))]"
             ],
             "properties": {
@@ -718,7 +711,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat('rtpip-', parameters('rtazureBastionHostName')))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat('rtpip-', parameters('azureBastionHostName')))]"
                             },
                             "subnet": {
                                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('rtvirtualNetworkName'), variables('bastionSubnetName'))]"
