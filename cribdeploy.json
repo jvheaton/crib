@@ -971,7 +971,7 @@
                         "value": "[variables('btvirtualNetworkAddressRange')]"
                     },
                     "subnets": {
-                        "value": "[variables('allSubnets')]"
+                        "value": "[variables('btallSubnets')]"
                     },
                     "DNSServerAddress": {
                         "value": [
