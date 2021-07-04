@@ -768,16 +768,590 @@
                     }
                 ]
             }
+        },
+        {
+            //BT VMs
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2018-10-01",
+            "name": "[variables('allEndpoints')[copyIndex('vmVMCopy')].vmName]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic-', variables('allEndpoints')[copyIndex('vmVMCopy')].vmName))]"
+            ],
+            "copy": {
+                "name": "vmVMCopy",
+                "count": "[length(variables('allEndpoints'))]"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('allEndpoints')[copyIndex('vmVMCopy')].vmSize]"
+                },
+                "osProfile": {
+                    "computerName": "[variables('allEndpoints')[copyIndex('vmVMCopy')].vmName]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('allEndpoints')[copyIndex('vmVMCopy')].publisher]",
+                        "offer": "[variables('allEndpoints')[copyIndex('vmVMCopy')].offer]",
+                        "sku": "[variables('allEndpoints')[copyIndex('vmVMCopy')].sku]",
+                        "version": "[variables('allEndpoints')[copyIndex('vmVMCopy')].version]"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage"
+                    },
+                    "dataDisks": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-', variables('allEndpoints')[copyIndex('vmVMCopy')].vmName))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        },
+        {
+            //Extensions for WKS
+            "name": "[concat(variables('allWinWKS')[copyIndex('InitialSetUpWKSCopy')].vmName, '/', variables('allWinWKS')[copyIndex('InitialSetUpWKSCopy')].extensionName)]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-12-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('allWinWKS')[copyIndex('InitialSetUpWKSCopy')].vmName)]"
+            ],
+            "copy": {
+                "name": "InitialSetUpWKSCopy",
+                "count": "[length(variables('allWinWKS'))]"
+            },
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.8",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": "[variables('initialSetUpScripts')]",
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./Set-Initial-Settings.ps1',' ','-SetupType Endpoint')]"
+                },
+                "protectedSettings": {}
+            }
+        },
+        {
+            //Extensions for DC
+            "name": "[concat(variables('domainController')[0].vmName, '/', variables('domainController')[0].extensionName)]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-12-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('domainController')[0].vmName)]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.8",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": "[variables('initialDCADFSScripts')]",
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./Set-Initial-Settings.ps1',' ', '-SetupType DC',' ','-PfxCertName',' ',parameters('pfxCertName'),' ','-CertificateType',' ',parameters('certificateType'))]"
+                },
+                "protectedSettings": {}
+            }
+        },
+        {
+            //Extensions for ADFS
+            "name": "[concat(variables('adfsServer')[0].vmName, '/', variables('adfsServer')[0].extensionName)]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-12-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('adfsServer')[0].vmName)]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.8",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": "[variables('initialDCADFSScripts')]",
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./Set-Initial-Settings.ps1',' ','-SetupType ADFS',' ','-PfxCertName',' ',parameters('pfxCertName'),' ','-CertificateType',' ',parameters('certificateType'))]"
+                },
+                "protectedSettings": {}
+            }
+        },
+        {
+            //Deployment of the AD Forest using linked template
+            "name": "CreateADForest",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('domainController')[0].vmName, variables('domainController')[0].extensionName)]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('createADTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName":   {
+                        "value": "[variables('domainController')[0].vmName]"
+                    },
+                    "createADForestScript": {
+                        "value": "[variables('createADForestScript')]"
+                    },
+                    "domainFQDN": {
+                        "value": "[parameters('domainFQDN')]"
+                    },
+                    "federationServiceName": {
+                        "value": "[variables('federationServiceName')]"
+                    },
+                    "adfsIPAddress": {
+                        "value": "[variables('adfsServer')[0].ipAddress]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "adfsUsername": {
+                        "value": "[parameters('adfsUsername')]"
+                    },
+                    "adfsPassword": {
+                        "value": "[parameters('adfsPassword')]"
+                    },
+                    "domainUsers": {
+                        "value": "[parameters('domainUsers')]"
+                    },
+                    "pfxCertName": {
+                        "value": "[parameters('pfxCertName')]"
+                    },
+                    "certificateType": {
+                        "value": "[parameters('certificateType')]"
+                    },
+                    "pfxCertPassword": {
+                        "value": "[parameters('pfxCertPassword')]"
+                    },
+                    "smbSharedFolder": {
+                        "value": "[variables('smbSharedFolder')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            //Deployment to update DNS in VNET using linked template
+            "name": "UpdateVNetDNS",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "CreateADForest"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('updateDNSServerScript')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "virtualNetworkName": {
+                        "value": "[variables('btvirtualNetworkName')]"
+                    },
+                    "virtualNetworkAddressRange": {
+                        "value": "[variables('btvirtualNetworkAddressRange')]"
+                    },
+                    "subnets": {
+                        "value": "[variables('allSubnets')]"
+                    },
+                    "DNSServerAddress": {
+                        "value": [
+                            "[variables('domainController')[0].ipAddress]"
+                        ]
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            //Deployment of the DC Import PFX Cert using linked template
+            "condition": "[equals(parameters('certificateType'),'TrustedSigned')]",
+            "name": "DCImportPfxCert",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "UpdateVNetDNS"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('importPfxCertTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName":   {
+                        "value": "[variables('domainController')[0].vmName]"
+                    },
+                    "importPfxCertScript": {
+                        "value": "[variables('importPfxCertScript')]"
+                    },
+                    "pfxCertPassword": {
+                        "value": "[parameters('pfxCertPassword')]"
+                    },
+                    "pfxCertPath": {
+                        "value": "[variables('pfxCertPath')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            //Deployment of WKS join domain using linked template
+            "name": "[concat(variables('allWinWKS')[copyIndex('vmDomainJoinCopy')].vmName, '-joinDomain')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "InitialSetUpWKSCopy",
+                "UpdateVNetDNS"
+            ],
+            "copy": {
+                "name": "vmDomainJoinCopy",
+                "count": "[length(variables('allWinWKS'))]"
+            },
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('joinDomainTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName":   {
+                        "value": "[variables('allWinWKS')[copyIndex('vmDomainJoinCopy')].vmName]"
+                    },
+                    "joinDomainScript": {
+                        "value": "[variables('joinDomainScript')]"
+                    },
+                    "domainFQDN": {
+                        "value": "[parameters('domainFQDN')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "dcIpAddress": {
+                        "value": "[variables('domainController')[0].ipAddress]"
+                    },
+                    "joinOU": {
+                        "value": "[variables('workstationsOUPath')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            //Deployment of ADFS join domain using linked template
+            "name": "[concat(variables('adfsServer')[0].vmName, '-joinDomain')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('adfsServer')[0].vmName, variables('adfsServer')[0].extensionName)]",
+                "UpdateVNetDNS"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('joinDomainTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName":   {
+                        "value": "[variables('adfsServer')[0].vmName]"
+                    },
+                    "joinDomainScript": {
+                        "value": "[variables('joinDomainScript')]"
+                    },
+                    "domainFQDN": {
+                        "value": "[parameters('domainFQDN')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "dcIpAddress": {
+                        "value": "[variables('domainController')[0].ipAddress]"
+                    },
+                    "joinOU": {
+                        "value": "[variables('serversOUPath')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            //Deployment of the ADFS Import PFX Cert using linked template
+            "name": "ADFSImportPfxCert",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "[concat(variables('adfsServer')[0].vmName, '-joinDomain')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('importPfxCertTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName":   {
+                        "value": "[variables('adfsServer')[0].vmName]"
+                    },
+                    "importPfxCertScript": {
+                        "value": "[variables('importPfxCertScript')]"
+                    },
+                    "pfxCertPassword": {
+                        "value": "[parameters('pfxCertPassword')]"
+                    },
+                    "pfxCertPath": {
+                        "value": "[variables('pfxCertPath')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            //Deployment of the Install ADFS using linked template
+            "name": "InstallADFS",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "ADFSImportPfxCert"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('installADFSTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName":   {
+                        "value": "[variables('adfsServer')[0].vmName]"
+                    },
+                    "installADFSScript": {
+                        "value": "[variables('installADFSScript')]"
+                    },
+                    "domainFQDN": {
+                        "value": "[parameters('domainFQDN')]"
+                    },
+                    "federationServiceName": {
+                        "value": "[variables('federationServiceName')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "adfsUsername": {
+                        "value": "[parameters('adfsUsername')]"
+                    },
+                    "adfsPassword": {
+                        "value": "[parameters('adfsPassword')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            //Deployment of the Install Sysmon using linked template
+            "condition": "[parameters('enableSysmon')]",
+            "name": "[concat(variables('allWinWKS')[copyIndex('vmSysmonSetUpCopy')].vmName, '-installSysmon')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "vmDomainJoinCopy"
+            ],
+            "copy": {
+                "name": "vmSysmonSetupCopy",
+                "count": "[length(variables('allWinWKS'))]"
+            },
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('sysmonInstallTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName":   {
+                        "value": "[variables('allWinWKS')[copyIndex('vmSysmonSetupCopy')].vmName]"
+                    },
+                    "installSysmonScript": {
+                        "value": "[variables('installSysmonScript')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            //Deployment of the enabling Sysmon on DC using linked template
+            "condition": "[parameters('enableSysmon')]",
+            "name": "[concat(variables('domainController')[0].vmName, '-installSysmon')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "UpdateVNetDNS",
+                "DCImportPfxCert"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('sysmonInstallTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName":   {
+                        "value": "[variables('domainController')[0].vmName]"
+                    },
+                    "installSysmonScript": {
+                        "value": "[variables('installSysmonScript')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            //Deployment of the enabling Sysmon on ADFS using linked template
+            "condition": "[parameters('enableSysmon')]",
+            "name": "[concat(variables('adfsServer')[0].vmName, '-installSysmon')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "InstallADFS"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('sysmonInstallTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName":   {
+                        "value": "[variables('adfsServer')[0].vmName]"
+                    },
+                    "installSysmonScript": {
+                        "value": "[variables('installSysmonScript')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            //Deployment of the enabling MMA on all VMs using linked template
+            "condition": "[parameters('enableMonitoringAgent')]",
+            "name": "[concat(variables('allEndpoints')[copyIndex('vmMMASetUpCopy')].vmName, '/OMSExtension')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-12-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "vmDomainJoinCopy",
+                "InstallADFS"
+            ],
+            "copy": {
+                "name": "vmMMASetUpCopy",
+                "count": "[length(variables('allEndpoints'))]"
+            },
+            "properties": {
+                "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                "type": "MicrosoftMonitoringAgent",
+                "typeHandlerVersion": "1.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "workspaceId": "[parameters('workspaceId')]"
+                },
+                "protectedSettings": {
+                    "workspaceKey": "[parameters('workspaceKey')]"
+                }
+            }
+        },
+        {
+            //Deployment of Install AADCOnnect
+            "condition": "[parameters('enableAADConnect')]",
+            "name": "[concat(variables('domainController')[0].vmName, '-installAADConnect')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "vmDomainJoinCopy",
+                "InstallADFS",
+                "DCImportPfxCert",
+                "[concat(variables('domainController')[0].vmName, '-installSysmon')]",
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('domainController')[0].vmName, 'OMSExtension')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('installAADConnectTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName":   {
+                        "value": "[variables('domainController')[0].vmName]"
+                    },
+                    "installAADConnectScript": {
+                        "value": "[variables('installAADConnectScript')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
         }
     ],
     "outputs": {
-        "virtualNetworkName": {
+        "btvirtualNetworkName": {
             "type": "string",
             "value": "[variables('btvirtualNetworkName')]"
         },
-        "virtualNetworkId": {
+        "btvirtualNetworkId": {
             "type": "string",
             "value": "[resourceId('Microsoft.Network/virtualNetworks/', variables('btvirtualNetworkName'))]"
+        },
+        "rtvirtualNetworkName": {
+            "type": "string",
+            "value": "[variables('rtvirtualNetworkName')]"
+        },
+        "rtvirtualNetworkId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Network/virtualNetworks/', variables('rtvirtualNetworkName'))]"
         },
         "allWinVMsDeployed": {
             "type": "array",
