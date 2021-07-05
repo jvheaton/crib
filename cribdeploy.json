@@ -104,9 +104,30 @@
         "numberOfWorkstations": {
             "type": "int",
             "minValue": 1,
-            "maxValue": 100,
+            "maxValue": 5,
+            "allowedValues": [
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
             "metadata": {
-                "description": "Number of VMs to deploy"
+                "description": "Number of VMs to deploy - min 1, max 5"
+            },
+            "defaultValue": 1
+        },
+        "numberOfWinServers": {
+            "type": "int",
+            "minValue": 1,
+            "maxValue": 3,
+            "allowedValues": [
+                1,
+                2,
+                3
+            ],
+            "metadata": {
+                "description": "Number of VMs to deploy - min 1, max 3"
             },
             "defaultValue": 1
         },
@@ -115,7 +136,7 @@
             "metadata": {
                 "description": "Prefix for the name of your virtual machine. Template will add a number starting from 5."
             },
-            "defaultValue": "vmWKS"
+            "defaultValue": "cribvm"
         },
         "windowsDesktopSKU": {
             "type": "string",
@@ -411,14 +432,14 @@
         "installSysmonScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/software/Install-Sysmon.zip', parameters('_artifactsLocationSasToken')))]",
         "installAADConnectScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/mis/Install-AADConnect.zip', parameters('_artifactsLocationSasToken')))]",
 
-        // Virtual Machine Properties
+        // Windows 10 Virtual Machine Properties
         "copy": [
             {
                 "name": "allWinWKS",
                 "count": "[parameters('numberOfWorkstations')]",
                 "input": {
                     "tag": "workstation",
-                    "vmName": "[concat(parameters('vmNamePrefix'),copyIndex('allWinWKS',6))]",
+                    "vmName": "[concat(parameters('vmNamePrefix'),'winwks',copyIndex('allWinWKS',6))]",
                     "os": "windows",
                     "subnetref": "[variables('subnetRef')]",
                     "ipAddress": "[concat(variables('btvmPrivateIPAddresPrefix'),copyIndex('allWinWKS',6))]",
@@ -429,8 +450,26 @@
                     "version": "[parameters('windowsDesktopVersion')]",
                     "extensionName": "SetupWinVM"
                 }
+            },
+            {
+                "name": "allWinServers",
+                "count": "[parameters('numberOfWinServers')]",
+                "input": {
+                    "tag": "winServer",
+                    "vmName": "[concat(parameters('vmNamePrefix'),'winsrv',copyIndex('allWinServers',11))]",
+                    "os": "windows",
+                    "subnetref": "[variables('subnetRef')]",
+                    "ipAddress": "[concat(variables('btvmPrivateIPAddresPrefix'),copyIndex('allWinServers',11))]",
+                    "vmSize": "[parameters('vmSize')]",
+                    "publisher": "MicrosoftWindowsServer",
+                    "offer": "WindowsServer",
+                    "sku": "[parameters('windowsServerSKU')]",
+                    "version": "[parameters('windowsServerVersion')]",
+                    "extensionName": "SetupWinVM"
+                }
             }
         ],
+
         "domainController": [
             {
                 "tag": "domainController",
@@ -463,8 +502,8 @@
         ],
 
         // Additional Variables
-        "allServers": "[concat(variables('domainController'), variables('adfsServer'))]",
-        "allEndpoints": "[concat(variables('allWinWKS'), variables('domainController'), variables('adfsServer'))]",
+        "allServers": "[concat(variables('allWinServers'),variables('domainController'), variables('adfsServer'))]",
+        "allEndpoints": "[concat(variables('allWinWKS'), variables('allWinServers'),variables('domainController'), variables('adfsServer'))]",
         "domainNameArray": "[split(parameters('domainFQDN'),'.')]",
         "workstationsOUPath": "[concat('OU=Workstations; DC=', variables('domainNameArray')[0], '; DC=', variables('domainNameArray')[1])]",
         "serversOUPath": "[concat('OU=Servers; DC=', variables('domainNameArray')[0], '; DC=', variables('domainNameArray')[1])]",
@@ -845,6 +884,31 @@
             }
         },
         {
+            //Extensions for SRV
+            "name": "[concat(variables('allWinServers')[copyIndex('InitialSetUpWSRVCopy')].vmName, '/', variables('allWinServers')[copyIndex('InitialSetUpWSRVCopy')].extensionName)]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-12-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('allWinServers')[copyIndex('InitialSetUpWSRVCopy')].vmName)]"
+            ],
+            "copy": {
+                "name": "InitialSetUpWSRVCopy",
+                "count": "[length(variables('allWinServers'))]"
+            },
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.8",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": "[variables('initialSetUpScripts')]",
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./Set-Initial-Settings.ps1',' ','-SetupType Endpoint')]"
+                },
+                "protectedSettings": {}
+            }
+        },
+        {
             //Extensions for DC
             "name": "[concat(variables('domainController')[0].vmName, '/', variables('domainController')[0].extensionName)]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
@@ -1020,7 +1084,7 @@
         },
         {
             //Deployment of WKS join domain using linked template
-            "name": "[concat(variables('allWinWKS')[copyIndex('vmDomainJoinCopy')].vmName, '-joinDomain')]",
+            "name": "[concat(variables('allWinWKS')[copyIndex('vmWKSDomainJoinCopy')].vmName, '-joinDomain')]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
             "dependsOn": [
@@ -1028,7 +1092,7 @@
                 "UpdateVNetDNS"
             ],
             "copy": {
-                "name": "vmDomainJoinCopy",
+                "name": "vmWKSDomainJoinCopy",
                 "count": "[length(variables('allWinWKS'))]"
             },
             "properties": {
@@ -1039,7 +1103,7 @@
                 },
                 "parameters": {
                     "vmName":   {
-                        "value": "[variables('allWinWKS')[copyIndex('vmDomainJoinCopy')].vmName]"
+                        "value": "[variables('allWinWKS')[copyIndex('vmWKSDomainJoinCopy')].vmName]"
                     },
                     "joinDomainScript": {
                         "value": "[variables('joinDomainScript')]"
@@ -1058,6 +1122,53 @@
                     },
                     "joinOU": {
                         "value": "[variables('workstationsOUPath')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            //Deployment of SRV join domain using linked template
+            "name": "[concat(variables('allWinServers')[copyIndex('vmWSRVDomainJoinCopy')].vmName, '-joinDomain')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "InitialSetUpWSRVCopy",
+                "UpdateVNetDNS"
+            ],
+            "copy": {
+                "name": "vmWSRVDomainJoinCopy",
+                "count": "[length(variables('allWinServers'))]"
+            },
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('joinDomainTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName":   {
+                        "value": "[variables('allWinServers')[copyIndex('vmWSRVDomainJoinCopy')].vmName]"
+                    },
+                    "joinDomainScript": {
+                        "value": "[variables('joinDomainScript')]"
+                    },
+                    "domainFQDN": {
+                        "value": "[parameters('domainFQDN')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "dcIpAddress": {
+                        "value": "[variables('domainController')[0].ipAddress]"
+                    },
+                    "joinOU": {
+                        "value": "[variables('serversOUPath')]"
                     },
                     "location": {
                         "value": "[parameters('location')]"
@@ -1187,16 +1298,16 @@
             }
         },
         {
-            //Deployment of the Install Sysmon using linked template
+            //Deployment of the Install Sysmon on WKS using linked template
             "condition": "[parameters('enableSysmon')]",
-            "name": "[concat(variables('allWinWKS')[copyIndex('vmSysmonSetUpCopy')].vmName, '-installSysmon')]",
+            "name": "[concat(variables('allWinWKS')[copyIndex('vmSysmonWKSSetUpCopy')].vmName, '-installSysmon')]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
             "dependsOn": [
-                "vmDomainJoinCopy"
+                "vmWKSDomainJoinCopy"
             ],
             "copy": {
-                "name": "vmSysmonSetupCopy",
+                "name": "vmSysmonWKSSetupCopy",
                 "count": "[length(variables('allWinWKS'))]"
             },
             "properties": {
@@ -1207,7 +1318,39 @@
                 },
                 "parameters": {
                     "vmName":   {
-                        "value": "[variables('allWinWKS')[copyIndex('vmSysmonSetupCopy')].vmName]"
+                        "value": "[variables('allWinWKS')[copyIndex('vmSysmonWKSSetupCopy')].vmName]"
+                    },
+                    "installSysmonScript": {
+                        "value": "[variables('installSysmonScript')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            //Deployment of the Install Sysmon on WSRV using linked template
+            "condition": "[parameters('enableSysmon')]",
+            "name": "[concat(variables('allWinServers')[copyIndex('vmSysmonWSRVSetUpCopy')].vmName, '-installSysmon')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "vmWSRVDomainJoinCopy"
+            ],
+            "copy": {
+                "name": "vmSysmonWSRVSetupCopy",
+                "count": "[length(variables('allWinServers'))]"
+            },
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('sysmonInstallTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName":   {
+                        "value": "[variables('allWinServers')[copyIndex('vmSysmonWSRVSetupCopy')].vmName]"
                     },
                     "installSysmonScript": {
                         "value": "[variables('installSysmonScript')]"
@@ -1283,7 +1426,8 @@
             "apiVersion": "2019-12-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "vmDomainJoinCopy",
+                "vmWKSDomainJoinCopy",
+                "vmWSRVDomainJoinCopy",
                 "InstallADFS"
             ],
             "copy": {
@@ -1310,7 +1454,8 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
             "dependsOn": [
-                "vmDomainJoinCopy",
+                "vmWKSDomainJoinCopy",
+                "vmWSRVDomainJoinCopy",
                 "InstallADFS",
                 "DCImportPfxCert",
                 "[concat(variables('domainController')[0].vmName, '-installSysmon')]",
