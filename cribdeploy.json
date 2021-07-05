@@ -233,7 +233,21 @@
                 "description": "Address Range of the virtual network"
             },
             "defaultValue": "192.169.0.0/16"
-        },      
+        },    
+        "hbvirtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Virtual Network"
+            },
+            "defaultValue": "hbvnet"
+        },  
+        "hbvirtualNetworkAddressRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Address Range of the virtual network"
+            },
+            "defaultValue": "192.170.0.0/24"
+        },  
         "btsubnetRange": {
             "type": "string",
             "metadata": {
@@ -246,7 +260,7 @@
             "metadata": {
                 "description": "Name of the subnet"
             },
-            "defaultValue": "btsnet-win"
+            "defaultValue": "btsnet"
         },
         "rtsubnetRange": {
             "type": "string",
@@ -260,7 +274,21 @@
             "metadata": {
                 "description": "Name of the subnet"
             },
-            "defaultValue": "rtsnet-win"
+            "defaultValue": "rtsnet"
+        },
+        "hbsubnetRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Address Range of the subnet"
+            },
+            "defaultValue": "192.170.0.0/26"
+        },
+        "hbsubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the subnet"
+            },
+            "defaultValue": "AzureFirewallSubnet"
         },
         "enableSysmon": {
             "type": "bool",
@@ -345,10 +373,14 @@
         "btvirtualNetworkAddressRange": "[parameters('btvirtualNetworkAddressRange')]",
         "rtvirtualNetworkName": "[parameters('rtvirtualNetworkName')]",
         "rtvirtualNetworkAddressRange": "[parameters('rtvirtualNetworkAddressRange')]",
+        "hbvirtualNetworkName": "[parameters('hbvirtualNetworkName')]",
+        "hbvirtualNetworkAddressRange": "[parameters('hbvirtualNetworkAddressRange')]",
         "btsubnetName": "[parameters('btsubnetName')]",
         "btsubnetRange": "[parameters('btsubnetRange')]",
         "rtsubnetName": "[parameters('rtsubnetName')]",
         "rtsubnetRange": "[parameters('rtsubnetRange')]",
+        "hbsubnetName": "[parameters('hbsubnetName')]",
+        "hbsubnetRange": "[parameters('hbsubnetRange')]",
         "btvmPrivateIPPrefixArray": "[take(split(variables('btsubnetRange'),'.'),3)]",
         "btvmPrivateIPAddresPrefix": "[format('{0}.{1}.{2}.',variables('btvmPrivateIPPrefixArray')[0], variables('btvmPrivateIPPrefixArray')[1], variables('btvmPrivateIPPrefixArray')[2])]",
         "rtvmPrivateIPPrefixArray": "[take(split(variables('rtsubnetRange'),'.'),3)]",
@@ -374,6 +406,14 @@
                 "properties": {
                     "addressPrefix": "[variables('rtsubnetRange')]",
                     "networkSecurityGroup": "[variables('networkSecurityGroup')]"
+                }
+            }
+        ],
+        "hbsubnets": [
+            {
+                "name": "[variables('hbsubnetName')]",
+                "properties": {
+                    "addressPrefix": "[variables('hbsubnetRange')]"
                 }
             }
         ],
@@ -404,6 +444,7 @@
         ],
         "btallSubnets": "[if(equals(parameters('remoteAccessMode'),'AzureBastionHost'), concat(variables('btsubnets'), variables('btazureBastionSubnet')), variables('btsubnets'))]",
         "rtallSubnets": "[if(equals(parameters('remoteAccessMode'),'AzureBastionHost'), concat(variables('rtsubnets'), variables('rtazureBastionSubnet')), variables('rtsubnets'))]",
+        "hballSubnets": "[variables('hbsubnets')]",
 
         // Nested Templates
         "updateDNSServerScript": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet-dns-server.json', parameters('_artifactsLocationSasToken')))]",
@@ -674,6 +715,24 @@
                     ]
                 },
                 "subnets": "[variables('rtallSubnets')]"
+            }
+        },
+        {
+            //Hub VNET
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-02-01",
+            "name": "[variables('hbvirtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-default-name'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('hbvirtualNetworkAddressRange')]"
+                    ]
+                },
+                "subnets": "[variables('hballSubnets')]"
             }
         },
         {
