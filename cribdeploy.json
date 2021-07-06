@@ -386,6 +386,7 @@
         "rtvmPrivateIPPrefixArray": "[take(split(variables('rtsubnetRange'),'.'),3)]",
         "rtvmPrivateIPAddresPrefix": "[format('{0}.{1}.{2}.',variables('rtvmPrivateIPPrefixArray')[0], variables('rtvmPrivateIPPrefixArray')[1], variables('rtvmPrivateIPPrefixArray')[2])]",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('btvirtualNetworkName'), variables('btsubnetName'))]",
+        "rtsubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('rtvirtualNetworkName'), variables('rtsubnetName'))]",
         "nsg-default-name": "nsg-rdp-allow",
         "nsg-id": {
             "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-default-name'))]"
@@ -510,7 +511,36 @@
                 }
             }
         ],
-
+        "kaliLinux": [
+            {
+                "tag": "kaliLinux",
+                "vmName": "crKali",
+                "os": "Linux",
+                "subnetref": "[variables('rtsubnetRef')]",
+                "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'14')]",
+                "vmSize": "[parameters('vmSize')]",
+                "publisher": "kali-linux",
+                "offer": "kali-linux",
+                "sku": "kali",
+                "version": "2019.2.0"
+                //"extensionName": "SetUpDC"
+            }
+        ],
+        "infectionMonkey": [
+            {
+                "tag": "infectionMonkey",
+                "vmName": "crInfMonkey",
+                "os": "Linux",
+                "subnetref": "[variables('rtsubnetRef')]",
+                "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'15')]",
+                "vmSize": "[parameters('vmSize')]",
+                "publisher": "guardicore",
+                "offer": "infection_monkey",
+                "sku": "infection_monkey",
+                "version": "latest"
+                //"extensionName": "SetUpDC"
+            }
+        ],
         "domainController": [
             {
                 "tag": "domainController",
@@ -544,7 +574,8 @@
 
         // Additional Variables
         "allServers": "[concat(variables('allWinServers'),variables('domainController'), variables('adfsServer'))]",
-        "allEndpoints": "[concat(variables('allWinWKS'), variables('allWinServers'),variables('domainController'), variables('adfsServer'))]",
+        "allEndpoints": "[concat(variables('allWinWKS'), variables('allWinServers'),variables('domainController'), variables('adfsServer'))]", //rename to allBlueTeamEnpoints here and everywere esle
+        "allRedTeamEndpoints": "[concat(variables('kaliLinux'), variables('infectionMonkey'))]",
         "domainNameArray": "[split(parameters('domainFQDN'),'.')]",
         "workstationsOUPath": "[concat('OU=Workstations; DC=', variables('domainNameArray')[0], '; DC=', variables('domainNameArray')[1])]",
         "serversOUPath": "[concat('OU=Servers; DC=', variables('domainNameArray')[0], '; DC=', variables('domainNameArray')[1])]",
@@ -699,7 +730,7 @@
             }
         },
         {
-            //Read Team VNET
+            //Red Team VNET
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2019-02-01",
             "name": "[variables('rtvirtualNetworkName')]",
@@ -736,6 +767,107 @@
             }
         },
         {
+            //HB Vnet peer with RT Vnet
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "apiVersion": "2020-04-01",
+            "name": "[concat(variables('hbvirtualNetworkName'), '/', variables('hbvirtualNetworkName'), '-Peering-To-', variables('rtvirtualNetworkName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('rtvirtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('hbvirtualNetworkName'))]"
+            ],
+            "properties": {
+                "peeringState": "Connected",
+                "remoteVirtualNetwork": {
+                "id": "[resourceid(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('rtvirtualNetworkName'))]"
+                },
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false,
+                "remoteAddressSpace": {
+                "addressPrefixes": [
+                    "[variables('rtvirtualNetworkAddressRange')]"
+                ]
+                }
+            }
+        },
+        {
+            //HB Vnet peer with BT Vnet
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "apiVersion": "2020-04-01",
+            "name": "[concat(variables('hbvirtualNetworkName'), '/', variables('hbvirtualNetworkName'), '-Peering-To-', variables('btvirtualNetworkName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('btvirtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('hbvirtualNetworkName'))]"
+            ],
+            "properties": {
+                "peeringState": "Connected",
+                "remoteVirtualNetwork": {
+                "id": "[resourceid(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('btvirtualNetworkName'))]"
+                },
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false,
+                "remoteAddressSpace": {
+                "addressPrefixes": [
+                    "[variables('btvirtualNetworkAddressRange')]"
+                ]
+                }
+            }
+        },
+        {
+            //BT Vnet peer with HB Vnet
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "apiVersion": "2020-04-01",
+            "name": "[concat(variables('btvirtualNetworkName'), '/', variables('btvirtualNetworkName'), '-Peering-To-', variables('hbvirtualNetworkName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('btvirtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('hbvirtualNetworkName'))]"
+            ],
+            "properties": {
+                "peeringState": "Connected",
+                "remoteVirtualNetwork": {
+                "id": "[resourceid('Microsoft.Network/virtualNetworks', variables('hbvirtualNetworkName'))]"
+                },
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false,
+                "remoteAddressSpace": {
+                "addressPrefixes": [
+                    "[variables('hbvirtualNetworkAddressRange')]"
+                ]
+                }
+            }
+        },
+        {
+            //RT Vnet peer with HB Vnet
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "apiVersion": "2020-04-01",
+            "name": "[concat(variables('rtvirtualNetworkName'), '/', variables('rtvirtualNetworkName'), '-Peering-To-', variables('hbvirtualNetworkName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('rtvirtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('hbvirtualNetworkName'))]"
+            ],
+            "properties": {
+                "peeringState": "Connected",
+                "remoteVirtualNetwork": {
+                "id": "[resourceid('Microsoft.Network/virtualNetworks', variables('hbvirtualNetworkName'))]"
+                },
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false,
+                "remoteAddressSpace": {
+                "addressPrefixes": [
+                    "[variables('hbvirtualNetworkAddressRange')]"
+                ]
+                }
+            }
+        },
+        //-----------------------------------------
+        {
             //Blue Team PIP for Az Bastion
             "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
             "type": "Microsoft.Network/publicIPAddresses",
@@ -750,7 +882,7 @@
             }
         },
         {
-            //Read Team PIP for Az Bastion
+            //Red Team PIP for Az Bastion
             "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2018-11-01",
@@ -792,7 +924,7 @@
             }
         },
         {
-            //Read Team Az Bastion
+            //Red Team Az Bastion
             "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
             "type": "Microsoft.Network/bastionHosts",
             "apiVersion": "2020-05-01",
@@ -868,6 +1000,54 @@
             }
         },
         {
+            //Red Team PIP for Traditional public faced RDP
+            "condition": "[equals(parameters('remoteAccessMode'),'AllowPublicIP')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-11-01",
+            "name": "[concat('pip-', variables('allRedTeamEndpoints')[copyIndex('vmPublicIpCopy')].vmName)]",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "vmPublicIpCopy",
+                "count": "[length(variables('allRedTeamEndpoints'))]"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[toLower(concat(variables('allRedTeamEndpoints')[copyIndex('vmPublicIpCopy')].vmName, '-', uniquestring(resourceGroup().id, parameters('utcValue'))))]"
+                }
+            }
+        },
+        {
+            //Red Team Netw Interface
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-11-01",
+            "name": "[concat('nic-', variables('allRedTeamEndpoints')[copyIndex('vmNetworkInterfaceCopy')].vmName)]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses/', concat('pip-', variables('allRedTeamEndpoints')[copyIndex('vmNetworkInterfaceCopy')].vmName))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('rtvirtualNetworkName'))]"
+            ],
+            "copy": {
+                "name": "vmNetworkInterfaceCopy",
+                "count": "[length(variables('allRedTeamEndpoints'))]"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[variables('allRedTeamEndpoints')[copyIndex('vmNetworkInterfaceCopy')].ipAddress]",
+                            "publicIPAddress": "[if(equals(parameters('remoteAccessMode'),'AllowPublicIP'), json(concat('{\"id\":', '\"', resourceId('Microsoft.Network/publicIPAddresses/', concat('pip-', variables('allRedTeamEndpoints')[copyIndex('vmNetworkInterfaceCopy')].vmName)),'\"}')),json('null'))]",
+                            "subnet": {
+                                "id": "[variables('allRedTeamEndpoints')[copyIndex('vmNetworkInterfaceCopy')].subnetref]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
             //BT VMs
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2018-10-01",
@@ -906,6 +1086,56 @@
                     "networkInterfaces": [
                         {
                             "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-', variables('allEndpoints')[copyIndex('vmVMCopy')].vmName))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        },
+        {
+            //RT VMs
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2018-10-01",
+            "name": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic-', variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName))]"
+            ],
+            "copy": {
+                "name": "vmVMCopy",
+                "count": "[length(variables('allRedTeamEndpoints'))]"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmSize]"
+                },
+                "osProfile": {
+                    "computerName": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].publisher]",
+                        "offer": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].offer]",
+                        "sku": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].sku]",
+                        "version": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].version]"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage"
+                    },
+                    "dataDisks": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-', variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName))]"
                         }
                     ]
                 },
