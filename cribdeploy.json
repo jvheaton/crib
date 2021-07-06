@@ -1190,8 +1190,8 @@
             "name": "juceShopwebplan",
             "location": "[resourceGroup().location]",
             "sku": {
-                "Tier": "PremiumV2",
-                "Name": "P1v2"
+                "Tier": "Standard",
+                "Name": "S1"
             },
             "kind": "linux",
             "properties": {
