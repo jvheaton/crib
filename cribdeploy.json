@@ -520,6 +520,8 @@
                 "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'14')]",
                 "vmSize": "[parameters('vmSize')]",
                 "publisher": "kali-linux",
+                "product": "kali-linux",
+                "name": "kali",
                 "offer": "kali-linux",
                 "sku": "kali",
                 "version": "2019.2.0"
@@ -535,6 +537,8 @@
                 "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'15')]",
                 "vmSize": "[parameters('vmSize')]",
                 "publisher": "guardicore",
+                "product": "infection_monkey",
+                "name": "infection_monkey",
                 "offer": "infection_monkey",
                 "sku": "infection_monkey",
                 "version": "latest"
@@ -1098,7 +1102,7 @@
             }
         },
         {
-            //RT VMs
+            //RT OSS VMs
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2018-10-01",
             "name": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName]",
@@ -1110,6 +1114,11 @@
             "copy": {
                 "name": "vmVMCopy",
                 "count": "[length(variables('allRedTeamEndpoints'))]"
+            },
+            "plan": {
+                "name": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].name]",
+                "publisher": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].publisher]",
+                "product": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].product]"
             },
             "properties": {
                 "hardwareProfile": {
