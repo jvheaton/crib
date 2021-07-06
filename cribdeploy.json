@@ -542,7 +542,6 @@
                 "offer": "infection_monkey",
                 "sku": "infection_monkey",
                 "version": "latest"
-                //"extensionName": "SetUpDC"
             }
         ],
         "domainController": [
@@ -1154,6 +1153,53 @@
                         "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
                     }
                 }
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "name": "crJuceShop",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', 'juceShopwebplan')]"
+            ],
+            "tags": {},
+            "properties": {
+                "name": "crJuceShop",
+                "siteConfig": {
+                "appSettings": [
+                    {
+                    "name": "DOCKER_REGISTRY_SERVER_URL",
+                    "value": "https://index.docker.io"
+                    },
+                    {
+                    "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+                    "value": "false"
+                    }
+                ],
+                "linuxFxVersion": "DOCKER|bkimminich/juice-shop",
+                "alwaysOn": true
+                },
+                "serverFarmId": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', 'juceShopwebplan')]",
+                "clientAffinityEnabled": false
+            }
+            },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "name": "juceShopwebplan",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "Tier": "PremiumV2",
+                "Name": "P1v2"
+            },
+            "kind": "linux",
+            "properties": {
+                "name": "juceShopwebplan",
+                "workerSize": 3,
+                "workerSizeId": 3,
+                "numberOfWorkers": 1,
+                "reserved": true
             }
         },
         {
