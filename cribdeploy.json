@@ -46,7 +46,7 @@
         },
         "azAppGatewayPolicyName": {
             "type": "string",
-            "defaultValue": "crAzAppGtwPolicyName",
+            "defaultValue": "crAzAppGtwPolicy",
             "metadata": {
                 "description": "Namefor the Azure App Gateway Policy Name."
             }
@@ -248,98 +248,98 @@
                 "description": "Log analytics workspace keys"
             }
         },
-        "btvirtualNetworkName": {
+        "btVirtualNetworkName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the Virtual Network"
             },
             "defaultValue": "btvnet-win"
         },
-        "btvirtualNetworkAddressRange": {
+        "btVirtualNetworkAddressRange": {
             "type": "string",
             "metadata": {
                 "description": "Address Range of the virtual network"
             },
             "defaultValue": "192.168.0.0/16"
         },
-        "rtvirtualNetworkName": {
+        "rtVirtualNetworkName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the Virtual Network"
             },
             "defaultValue": "rtvnet-win"
         },  
-        "rtvirtualNetworkAddressRange": {
+        "rtVirtualNetworkAddressRange": {
             "type": "string",
             "metadata": {
                 "description": "Address Range of the virtual network"
             },
             "defaultValue": "192.169.0.0/16"
         },    
-        "hbvirtualNetworkName": {
+        "hbVirtualNetworkName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the Virtual Network"
             },
             "defaultValue": "hbvnet"
         },  
-        "hbvirtualNetworkAddressRange": {
+        "hbVirtualNetworkAddressRange": {
             "type": "string",
             "metadata": {
                 "description": "Address Range of the virtual network"
             },
             "defaultValue": "192.170.0.0/24"
         },  
-        "btsubnetRange": {
+        "btSubnetRange": {
             "type": "string",
             "metadata": {
                 "description": "Address Range of the subnet"
             },
             "defaultValue": "192.168.2.0/24"
         },
-        "btsubnetName": {
+        "btSubnetName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the subnet"
             },
             "defaultValue": "btsnet"
         },
-        "rtsubnetRange": {
+        "rtSubnetRange": {
             "type": "string",
             "metadata": {
                 "description": "Address Range of the subnet"
             },
             "defaultValue": "192.169.2.0/24"
         },
-        "rtsubnetName": {
+        "rtSubnetName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the subnet"
             },
             "defaultValue": "rtsnet"
         },
-        "hbsubnetRange": {
+        "hbSubnetRange": {
             "type": "string",
             "metadata": {
                 "description": "Address Range of the subnet"
             },
             "defaultValue": "192.170.0.0/26"
         },
-        "hbsubnetName": {
+        "hbSubnetName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the subnet"
             },
             "defaultValue": "AzureFirewallSubnet"
         },
-        "hbAGTWsubnetRange": {
+        "hbAgtwSubnetRange": {
             "type": "string",
             "metadata": {
                 "description": "Address Range of the subnet"
             },
             "defaultValue": "192.170.0.64/26"
         },
-        "hbAGTWsubnetName": {
+        "hbAgtwSubnetName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the subnet"
@@ -1149,7 +1149,7 @@
         {
           "type": "Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies",
           "apiVersion": "2019-09-01",
-          "name": "variables('azAppGatewayPolicyName')]",
+          "name": "[variables('azAppGatewayPolicyName')]",
           "dependsOn": [],
           "location": "[parameters('location')]",
           "tags": {},
