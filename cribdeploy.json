@@ -9,6 +9,48 @@
             },
             "defaultValue": "[utcNow()]"
         },
+        "azFirewallPublicIPName": {
+            "type": "string",
+            "defaultValue": "crAzFWPiP",
+            "metadata": {
+                "description": "Namefor the Azure Firewall Public IP."
+            }
+        },
+        "azFirewallPolicyName": {
+            "type": "string",
+            "defaultValue": "crAzFWPolicy",
+            "metadata": {
+                "description": "Name for the Azure Firewall Policy."
+            }
+        },
+        "azFirewallName": {
+            "type": "string",
+            "defaultValue": "crAzFirewall",
+            "metadata": {
+                "description": "Name for the Azure Firewall ."
+            }
+        },
+        "azAppGatewayName": {
+            "type": "string",
+            "defaultValue": "crAzAppGtw",
+            "metadata": {
+                "description": "Name for the Azure Gateway ."
+            }
+        },
+        "azAppGatewayPublicIPName": {
+            "type": "string",
+            "defaultValue": "crAzAppGtwPiP",
+            "metadata": {
+                "description": "Namefor the Azure App Gateway Public IP."
+            }
+        },
+        "azAppGatewayPolicyName": {
+            "type": "string",
+            "defaultValue": "crAzAppGtwPolicyName",
+            "metadata": {
+                "description": "Namefor the Azure App Gateway Policy Name."
+            }
+        },
         "adminUsername": {
             "type": "string",
             "defaultValue": "gastori",
@@ -290,6 +332,20 @@
             },
             "defaultValue": "AzureFirewallSubnet"
         },
+        "hbAGTWsubnetRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Address Range of the subnet"
+            },
+            "defaultValue": "192.170.0.64/26"
+        },
+        "hbAGTWsubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the subnet"
+            },
+            "defaultValue": "AzureAppGTWlSubnet"
+        },
         "enableSysmon": {
             "type": "bool",
             "defaultValue": false,
@@ -381,6 +437,8 @@
         "rtsubnetRange": "[parameters('rtsubnetRange')]",
         "hbsubnetName": "[parameters('hbsubnetName')]",
         "hbsubnetRange": "[parameters('hbsubnetRange')]",
+        "hbAGTWsubnetName": "[parameters('hbAGTWsubnetName')]",
+        "hbAGTWsubnetRange": "[parameters('hbAGTWsubnetRange')]",
         "btvmPrivateIPPrefixArray": "[take(split(variables('btsubnetRange'),'.'),3)]",
         "btvmPrivateIPAddresPrefix": "[format('{0}.{1}.{2}.',variables('btvmPrivateIPPrefixArray')[0], variables('btvmPrivateIPPrefixArray')[1], variables('btvmPrivateIPPrefixArray')[2])]",
         "rtvmPrivateIPPrefixArray": "[take(split(variables('rtsubnetRange'),'.'),3)]",
@@ -415,6 +473,12 @@
                 "name": "[variables('hbsubnetName')]",
                 "properties": {
                     "addressPrefix": "[variables('hbsubnetRange')]"
+                }
+            },
+            {
+                "name": "[variables('hbAGTWsubnetName')]",
+                "properties": {
+                    "addressPrefix": "[variables('hbAGTWsubnetRange')]"
                 }
             }
         ],
@@ -575,6 +639,19 @@
             }
         ],
 
+        //Firewall, App Gateway Variables
+        "azFirewallName": "[parameters('azFirewallName')]",
+        "azFirewallPublicIPName": "[parameters('azFirewallPublicIPName')]",
+        "azFirewallPolicyName": "[parameters('azFirewallPolicyName')]",
+        "azAppGatewayName": "[parameters('azAppGatewayName')]",
+        "azAppGatewayPublicIPName": "[parameters('azAppGatewayPublicIPName')]",
+        "azAppGatewayPolicyName": "[parameters('azAppGatewayPolicyName')]",
+        "applicationGatewayId": "[resourceId('Microsoft.Network/applicationGateways', variables('azAppGatewayName'))]",
+
+        //Web App JuiceShop
+        "webappName": "crJuiceShop",
+        "webappServicePlanName": "crjuiceShopwebplan",
+
         // Additional Variables
         "allServers": "[concat(variables('allWinServers'),variables('domainController'), variables('adfsServer'))]",
         "allEndpoints": "[concat(variables('allWinWKS'), variables('allWinServers'),variables('domainController'), variables('adfsServer'))]", //rename to allBlueTeamEnpoints here and everywere esle
@@ -582,6 +659,10 @@
         "domainNameArray": "[split(parameters('domainFQDN'),'.')]",
         "workstationsOUPath": "[concat('OU=Workstations; DC=', variables('domainNameArray')[0], '; DC=', variables('domainNameArray')[1])]",
         "serversOUPath": "[concat('OU=Servers; DC=', variables('domainNameArray')[0], '; DC=', variables('domainNameArray')[1])]",
+        "seperatedATGSubnetAddressPrefix_p1": "[split(variables('hbAGTWsubnetRange'),'.')]",
+        "seperatedATGSubnetAddressPrefix_p2": "[split(variables('seperatedATGSubnetAddressPrefix_p1')[3],'/')]",
+        "AppGTWPrivIP": "[concat(variables('seperatedATGSubnetAddressPrefix_p1')[0],'.',variables('seperatedATGSubnetAddressPrefix_p1')[1],'.',variables('seperatedATGSubnetAddressPrefix_p1')[2],'.',string(add(int(variables('seperatedATGSubnetAddressPrefix_p2')[0]),5)))]",
+        
         
         //Certificates
         "smbSharedFolder": "Setup",
@@ -899,6 +980,266 @@
             }
         },
         {
+            //Public Ip for App Gateway
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2019-02-01",
+            "name": "[variables('azAppGatewayPublicIPName')]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4
+            }
+        },
+        {
+            //Public Ip for Firewall
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2019-02-01",
+            "name": "[variables('azFirewallPublicIPName')]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4
+            }
+        },
+//--
+
+        {
+          "type": "Microsoft.Network/applicationGateways",
+          "apiVersion": "2020-04-01",
+          "name": "[variables('azAppGatewayName')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies', variables('azAppGatewayPolicyName'))]",
+            "[resourceId('Microsoft.Network/publicIPAddresses/', variables('azAppGatewayPublicIPName'))]",
+            "[resourceId('Microsoft.Web/sites/', variables('webappName'))]",
+            "[resourceId('Microsoft.Network/virtualNetworks/', variables('hbvirtualNetworkName'))]"
+          ],
+          "tags": {},
+          "properties": {
+            "sku": {
+              "name": "WAF_v2",
+              "tier": "WAF_v2",
+              "capacity": 2
+            },
+            "gatewayIPConfigurations": [
+              {
+                "name": "appGatewayIpConfig",
+                "properties": {
+                  "subnet": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAGTWsubnetName'))]"//create subnet first
+                  }
+                }
+              }
+            ],
+            "frontendIPConfigurations": [
+              {
+                "name": "appGwPublicFrontendIp",
+                "properties": {
+                  "PublicIPAddress": {
+                    "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('azAppGatewayPublicIPName'))]"
+                  }
+                }
+              },
+              {
+                "name": "appGwPrivateFrontendIp",
+                "properties": {
+                  "subnet": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAGTWsubnetName'))]"
+                  },
+                  "privateIPAddress": "[variables('AppGTWPrivIP')]",
+                  "privateIPAllocationMethod": "Static"
+                }
+              }
+            ],
+            "frontendPorts": [
+              {
+                "name": "port_80",
+                "properties": {
+                  "port": 80
+                }
+              },
+              {
+                "name": "port_8080",
+                "properties": {
+                  "port": 8080
+                }
+              },
+              {
+                "name": "port_443",
+                "properties": {
+                  "port": 443
+                }
+              }
+            ],
+            "backendAddressPools": [
+              {
+                "name": "PAAS-APP",
+                "properties": {
+                  "backendAddresses": [
+                    {
+                      "fqdn": "[concat(variables('webappName'),'.azurewebsites.net')]"  //this is for MAC
+                      //"fqdn": "[concat(variables('webappName'),'.azurewebsites.us')]" //this is for MAG
+                    }
+                  ]
+                }
+              }
+            ],
+            "backendHttpSettingsCollection": [
+              {
+                "name": "Default",
+                "properties": {
+                  "port": 443,
+                  "protocol": "Https",
+                  "cookieBasedAffinity": "Disabled",
+                  "hostName": "[concat(variables('webappName'),'.azurewebsites.net')]",  //this is for MAC
+                  //"hostName": "[concat(variables('webappName'),'.azurewebsites.us')]", //this is for MAG
+                  "pickHostNameFromBackendAddress": false,
+                  "affinityCookieName": "ApplicationGatewayAffinity",
+                  "requestTimeout": 20
+                }
+              }
+            ],
+            "httpListeners": [
+              {
+                "name": "Public-HTTP",
+                "properties": {
+                  "frontendIPConfiguration": {
+                    "id": "[concat(variables('applicationGatewayId'), '/frontendIPConfigurations/appGwPublicFrontendIp')]"
+                  },
+                  "frontendPort": {
+                    "id": "[concat(variables('applicationGatewayId'), '/frontendPorts/port_80')]"
+                  },
+                  "protocol": "Http"
+                }
+              }
+            ],
+            "requestRoutingRules": [
+              {
+                "Name": "PublicIPRule",
+                "properties": {
+                  "RuleType": "Basic",
+                  "httpListener": {
+                    "id": "[concat(variables('applicationGatewayId'), '/httpListeners/Public-HTTP')]"
+                  },
+                  "backendAddressPool": {
+                    "id": "[concat(variables('applicationGatewayId'), '/backendAddressPools/PAAS-APP')]"
+                  },
+                  "backendHttpSettings": {
+                    "id": "[concat(variables('applicationGatewayId'), '/backendHttpSettingsCollection/Default')]"
+                  }
+                }
+              }
+            ],
+            "enableHttp2": false,
+            "firewallPolicy": {
+              "id": "[resourceId('Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies', variables('azAppGatewayPolicyName'))]"
+            }
+          }
+        },
+        {
+          "type": "Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies",
+          "apiVersion": "2019-09-01",
+          "name": "variables('azAppGatewayPolicyName')]",
+          "dependsOn": [],
+          "location": "[parameters('location')]",
+          "tags": {},
+          "properties": {
+            "customRules": [
+              {
+                "name": "SentinelBlockIP",
+                "priority": 10,
+                "ruleType": "MatchRule",
+                "action": "Block",
+                "matchConditions": [
+                  {
+                    "matchVariables": [
+                      {
+                        "variableName": "RemoteAddr"
+                      }
+                    ],
+                    "operator": "IPMatch",
+                    "negationConditon": false,
+                    "matchValues": [
+                      "104.210.223.108"
+                    ],
+                    "transforms": []
+                  }
+                ]
+              },
+              {
+                "name": "BlockInternetExplorer11",
+                "priority": 30,
+                "ruleType": "MatchRule",
+                "action": "Block",
+                "matchConditions": [
+                  {
+                    "matchVariables": [
+                      {
+                        "variableName": "RequestHeaders",
+                        "selector": "User-Agent"
+                      }
+                    ],
+                    "operator": "Contains",
+                    "negationConditon": false,
+                    "matchValues": [
+                      "rv:11.0"
+                    ],
+                    "transforms": []
+                  }
+                ]
+              }
+            ],
+            "policySettings": {
+              "fileUploadLimitInMb": 100,
+              "maxRequestBodySizeInKb": 128,
+              "mode": "Prevention",
+              "requestBodyCheck": true,
+              "state": "Enabled"
+            },
+            "managedRules": {
+              "exclusions": [],
+              "managedRuleSets": [
+                {
+                  "ruleSetType": "OWASP",
+                  "ruleSetVersion": "3.1",
+                  "ruleGroupOverrides": [
+                    {
+                      "ruleGroupName": "REQUEST-920-PROTOCOL-ENFORCEMENT",
+                      "rules": [
+                        {
+                          "ruleId": "920350",
+                          "state": "Disabled"
+                        },
+                        {
+                          "ruleId": "920320",
+                          "state": "Disabled"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+
+
+//--
+
+
+
+
+        {
             //Blue Team Az Bastion
             "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
             "type": "Microsoft.Network/bastionHosts",
@@ -1155,17 +1496,18 @@
                 }
             }
         },
+        //Web App JuiceShop
         {
             "type": "Microsoft.Web/sites",
             "apiVersion": "2018-11-01",
-            "name": "crJuceShop",
+            "name": "[variables('webappName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Web/serverfarms/', 'juceShopwebplan')]"
+                "[concat('Microsoft.Web/serverfarms/', variables('webappServicePlanName'))]"
             ],
             "tags": {},
             "properties": {
-                "name": "crJuceShop",
+                "name": "[variables('webappName')]",
                 "siteConfig": {
                 "appSettings": [
                     {
@@ -1180,22 +1522,22 @@
                 "linuxFxVersion": "DOCKER|bkimminich/juice-shop",
                 "alwaysOn": true
                 },
-                "serverFarmId": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', 'juceShopwebplan')]",
+                "serverFarmId": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('webappServicePlanName'))]",
                 "clientAffinityEnabled": false
             }
             },
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2018-02-01",
-            "name": "juceShopwebplan",
+            "name": "[variables('webappServicePlanName')]",
             "location": "[resourceGroup().location]",
             "sku": {
-                "Tier": "Standard",
-                "Name": "S1"
+                "Tier": "Standard", //change to "PremiumV2"
+                "Name": "S1" //change to "P1v2gitgit
             },
             "kind": "linux",
             "properties": {
-                "name": "juceShopwebplan",
+                "name": "[variables('webappServicePlanName')]",
                 "workerSize": 3,
                 "workerSizeId": 3,
                 "numberOfWorkers": 1,
