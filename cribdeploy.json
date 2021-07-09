@@ -762,20 +762,6 @@
                 "version": "latest"
             }
         ],
-        "commandAndControl": [
-            {
-                "tag": "c2Server",
-                "vmName": "c2Server",
-                "os": "Linux",
-                "subnetref": "[variables('rtsubnetRef')]",
-                "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'16')]", //change to 6
-                "vmSize": "[parameters('vmSize')]",
-                "publisher": "Canonical",
-                "offer": "UbuntuServer",
-                "sku": "18.04-LTS",
-                "version": "latest"
-            }
-        ],
         "domainController": [
             {
                 "tag": "domainController",
@@ -836,7 +822,7 @@
         "linuxAuthenticationType": "[parameters('linuxAuthenticationType')]",
         "allServers": "[concat(variables('allWinServers'),variables('domainController'), variables('adfsServer'))]",
         "allBlueTeamEnpoints": "[concat(variables('allWinWKS'), variables('allWinServers'),variables('domainController'), variables('adfsServer'), variables('allUbuntuServers'),variables('allCentOSServers'),variables('allRedHatServers'))]", //rename allendpoints to allBlueTeamEnpoints here and everywere esle
-        "allRedTeamEndpoints": "[concat(variables('kaliLinux'), variables('infectionMonkey'), variables('commandAndControl'))]",
+        "allRedTeamEndpoints": "[concat(variables('kaliLinux'), variables('infectionMonkey'))]",
         "domainNameArray": "[split(parameters('domainFQDN'),'.')]",
         "workstationsOUPath": "[concat('OU=Workstations; DC=', variables('domainNameArray')[0], '; DC=', variables('domainNameArray')[1])]",
         "serversOUPath": "[concat('OU=Servers; DC=', variables('domainNameArray')[0], '; DC=', variables('domainNameArray')[1])]",
@@ -1631,8 +1617,7 @@
                 "count": "[length(variables('allRedTeamEndpoints'))]"
             },
             "plan": {
-                //"name": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].name]",
-                "name": "[if(equals(variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName, 'c2Server'),json('null'),variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].name)]",
+                "name": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].name]",
                 "publisher": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].publisher]",
                 "product": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].product]"
             },
