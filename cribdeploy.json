@@ -771,7 +771,7 @@
                 "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'16')]", //change to 6
                 "vmSize": "[parameters('vmSize')]",
                 "publisher": "Canonical",
-                "product": "UbuntuServer",
+                "offer": "UbuntuServer",
                 "sku": "18.04-LTS",
                 "version": "latest"
             }
@@ -1631,9 +1631,9 @@
                 "count": "[length(variables('allRedTeamEndpoints'))]"
             },
             "plan": {
-                "name": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].name]",
-                "publisher": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].publisher]",
-                "product": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].product]"
+                "name": "[if(equals(variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName, 'c2Server'),json('null'),variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].name)]",
+                "publisher": "[if(equals(variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName, 'c2Server'),json('null'),variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].publisher)]",
+                "product": "[if(equals(variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName, 'c2Server'),json('null'),variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].product)]"
             },
             "properties": {
                 "hardwareProfile": {
