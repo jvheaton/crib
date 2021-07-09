@@ -66,6 +66,23 @@
                 "description": "Password for the all Virtual machines. The password must be at least 12 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter"
             }
         },
+        "linuxAuthenticationType": {
+            "type": "string",
+            "defaultValue": "password",
+            "allowedValues": [
+                "sshPublicKey",
+                "password"
+            ],
+            "metadata": {
+                "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+            }
+        },
+        "linuxAdminPasswordOrKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "SSH Key or password for the Virtual Machine. SSH key is recommended. The password must be at least 8 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+            }
+        },
         "adfsUsername": {
             "type": "string",
             "defaultValue": "gastori",
@@ -173,6 +190,48 @@
             },
             "defaultValue": 1
         },
+        "numberOfUbuntuServers": {
+            "type": "int",
+            "minValue": 0,
+            "maxValue": 2,
+            "allowedValues": [
+                0,
+                1,
+                2
+            ],
+            "metadata": {
+                "description": "Number of VMs to deploy - min 0, max 2"
+            },
+            "defaultValue": 1
+        },
+        "numberOfCentOSServers": {
+            "type": "int",
+            "minValue": 0,
+            "maxValue": 2,
+            "allowedValues": [
+                0,
+                1,
+                2
+            ],
+            "metadata": {
+                "description": "Number of VMs to deploy - min 0, max 2"
+            },
+            "defaultValue": 1
+        },
+        "numberOfRedHatServers": {
+            "type": "int",
+            "minValue": 0,
+            "maxValue": 2,
+            "allowedValues": [
+                0,
+                1,
+                2
+            ],
+            "metadata": {
+                "description": "Number of VMs to deploy - min 0, max 2"
+            },
+            "defaultValue": 1
+        },
         "vmNamePrefix": {
             "type": "string",
             "metadata": {
@@ -218,6 +277,51 @@
                 "17763.1457.2009030514",
                 "latest"
             ]
+        },
+        "ubuntuServerSku":{
+            "type": "string",
+            "defaultValue": "18.04-LTS",
+            "allowedValues": [
+                "18.04-LTS",
+                "20.04-LTS"
+            ],
+            "metadata": {
+                "description": "The Ubuntu version for the Server VM. This will pick a fully patched image of this given Ubuntu version."
+            }
+        },
+        "ubuntuServerVersion": {
+            "type": "string",
+            "defaultValue": "latest"
+        },
+        "centOSServerSku":{
+            "type": "string",
+            "defaultValue": "7.7",
+            "allowedValues": [
+                "7.6",
+                "7.7"
+            ],
+            "metadata": {
+                "description": "The CentOS version for the Server VM. This will pick a fully patched image of this given Ubuntu version."
+            }
+        },
+        "centOSServerVersion": {
+            "type": "string",
+            "defaultValue": "latest"
+        },
+        "redHatServerSku":{
+            "type": "string",
+            "defaultValue": "8.2",
+            "allowedValues": [
+                "8.1",
+                "8.2"
+            ],
+            "metadata": {
+                "description": "The Red Hat version for the Server VM. This will pick a fully patched image of this given Ubuntu version."
+            }
+        },
+        "redHatServerVersion": {
+            "type": "string",
+            "defaultValue": "latest"
         },
         "vmSize": {
             "type": "string",
@@ -573,6 +677,57 @@
                     "version": "[parameters('windowsServerVersion')]",
                     "extensionName": "SetupWinVM"
                 }
+            },
+            {
+                "name": "allUbuntuServers",
+                "count": "[parameters('numberOfUbuntuServers')]",
+                "input": {
+                    "tag": "ubuntuServer",
+                    "vmName": "[concat(parameters('vmNamePrefix'),'ubuntusrv',copyIndex('allUbuntuServers',14))]",
+                    "os": "linux",
+                    "subnetref": "[variables('subnetRef')]",
+                    "ipAddress": "[concat(variables('btvmPrivateIPAddresPrefix'),copyIndex('allUbuntuServers',14))]",
+                    "vmSize": "[parameters('vmSize')]",
+                    "publisher": "Canonical",
+                    "offer": "UbuntuServer",
+                    "sku": "[parameters('ubuntuServerSku')]",
+                    "version": "[parameters('ubuntuServerVersion')]"
+                    //"extensionName": "SetupWinVM"
+                }
+            },
+            {
+                "name": "allCentOSServers",
+                "count": "[parameters('numberOfCentOSServers')]",
+                "input": {
+                    "tag": "centOSServer",
+                    "vmName": "[concat(parameters('vmNamePrefix'),'centossrv',copyIndex('allCentOSServers',16))]",
+                    "os": "linux",
+                    "subnetref": "[variables('subnetRef')]",
+                    "ipAddress": "[concat(variables('btvmPrivateIPAddresPrefix'),copyIndex('allCentOSServers',16))]",
+                    "vmSize": "[parameters('vmSize')]",
+                    "publisher": "OpenLogic",
+                    "offer": "Centos",
+                    "sku": "[parameters('centOSServerSku')]",
+                    "version": "[parameters('centOSServerVersion')]"
+                    //"extensionName": "SetupWinVM"
+                }
+            },
+            {
+                "name": "allRedHatServers",
+                "count": "[parameters('numberOfRedHatServers')]",
+                "input": {
+                    "tag": "redHatServer",
+                    "vmName": "[concat(parameters('vmNamePrefix'),'redhatsrv',copyIndex('allRedHatServers',18))]",
+                    "os": "linux",
+                    "subnetref": "[variables('subnetRef')]",
+                    "ipAddress": "[concat(variables('btvmPrivateIPAddresPrefix'),copyIndex('allRedHatServers',18))]",
+                    "vmSize": "[parameters('vmSize')]",
+                    "publisher": "RedHat",
+                    "offer": "RHEL",
+                    "sku": "[parameters('redHatServerSku')]",
+                    "version": "[parameters('redHatServerVersion')]"
+                    //"extensionName": "SetupWinVM"
+                }
             }
         ],
         "kaliLinux": [
@@ -581,7 +736,7 @@
                 "vmName": "crKali",
                 "os": "Linux",
                 "subnetref": "[variables('rtsubnetRef')]",
-                "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'14')]",
+                "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'14')]", //change to 4
                 "vmSize": "[parameters('vmSize')]",
                 "publisher": "kali-linux",
                 "product": "kali-linux",
@@ -589,7 +744,6 @@
                 "offer": "kali-linux",
                 "sku": "kali",
                 "version": "2019.2.0"
-                //"extensionName": "SetUpDC"
             }
         ],
         "infectionMonkey": [
@@ -598,7 +752,7 @@
                 "vmName": "crInfMonkey",
                 "os": "Linux",
                 "subnetref": "[variables('rtsubnetRef')]",
-                "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'15')]",
+                "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'15')]", //change to 5
                 "vmSize": "[parameters('vmSize')]",
                 "publisher": "guardicore",
                 "product": "infection_monkey",
@@ -638,6 +792,18 @@
                 "extensionName": "SetUpADFS"
             }
         ],
+        
+        "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+                "publicKeys": [
+                    {
+                        "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                        "keyData": "[parameters('linuxAdminPasswordOrKey')]"
+                    }
+                ]
+            }
+        },
 
         //Firewall, App Gateway Variables
         "azFirewallName": "[parameters('azFirewallName')]",
@@ -653,8 +819,9 @@
         "webappServicePlanName": "crjuiceShopwebplan",
 
         // Additional Variables
+        "linuxAuthenticationType": "[parameters('linuxAuthenticationType')]",
         "allServers": "[concat(variables('allWinServers'),variables('domainController'), variables('adfsServer'))]",
-        "allEndpoints": "[concat(variables('allWinWKS'), variables('allWinServers'),variables('domainController'), variables('adfsServer'))]", //rename to allBlueTeamEnpoints here and everywere esle
+        "allBlueTeamEnpoints": "[concat(variables('allWinWKS'), variables('allWinServers'),variables('domainController'), variables('adfsServer'), variables('allUbuntuServers'),variables('allCentOSServers'),variables('allRedHatServers'))]", //rename allendpoints to allBlueTeamEnpoints here and everywere esle
         "allRedTeamEndpoints": "[concat(variables('kaliLinux'), variables('infectionMonkey'))]",
         "domainNameArray": "[split(parameters('domainFQDN'),'.')]",
         "workstationsOUPath": "[concat('OU=Workstations; DC=', variables('domainNameArray')[0], '; DC=', variables('domainNameArray')[1])]",
@@ -1011,234 +1178,227 @@
                 "idleTimeoutInMinutes": 4
             }
         },
-//--
-
         {
-          "type": "Microsoft.Network/applicationGateways",
-          "apiVersion": "2020-04-01",
-          "name": "[variables('azAppGatewayName')]",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies', variables('azAppGatewayPolicyName'))]",
-            "[resourceId('Microsoft.Network/publicIPAddresses/', variables('azAppGatewayPublicIPName'))]",
-            "[resourceId('Microsoft.Web/sites/', variables('webappName'))]",
-            "[resourceId('Microsoft.Network/virtualNetworks/', variables('hbvirtualNetworkName'))]"
-          ],
-          "tags": {},
-          "properties": {
-            "sku": {
-              "name": "WAF_v2",
-              "tier": "WAF_v2",
-              "capacity": 2
-            },
-            "gatewayIPConfigurations": [
-              {
-                "name": "appGatewayIpConfig",
-                "properties": {
-                  "subnet": {
-                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAGTWsubnetName'))]"//create subnet first
-                  }
-                }
-              }
+            //Application Gateway
+            "type": "Microsoft.Network/applicationGateways",
+            "apiVersion": "2020-04-01",
+            "name": "[variables('azAppGatewayName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies', variables('azAppGatewayPolicyName'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses/', variables('azAppGatewayPublicIPName'))]",
+                "[resourceId('Microsoft.Web/sites/', variables('webappName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('hbvirtualNetworkName'))]"
             ],
-            "frontendIPConfigurations": [
-              {
-                "name": "appGwPublicFrontendIp",
-                "properties": {
-                  "PublicIPAddress": {
-                    "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('azAppGatewayPublicIPName'))]"
-                  }
-                }
-              },
-              {
-                "name": "appGwPrivateFrontendIp",
-                "properties": {
-                  "subnet": {
-                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAGTWsubnetName'))]"
-                  },
-                  "privateIPAddress": "[variables('AppGTWPrivIP')]",
-                  "privateIPAllocationMethod": "Static"
-                }
-              }
-            ],
-            "frontendPorts": [
-              {
-                "name": "port_80",
-                "properties": {
-                  "port": 80
-                }
-              },
-              {
-                "name": "port_8080",
-                "properties": {
-                  "port": 8080
-                }
-              },
-              {
-                "name": "port_443",
-                "properties": {
-                  "port": 443
-                }
-              }
-            ],
-            "backendAddressPools": [
-              {
-                "name": "PAAS-APP",
-                "properties": {
-                  "backendAddresses": [
-                    {
-                      "fqdn": "[concat(variables('webappName'),'.azurewebsites.net')]"  //this is for MAC
-                      //"fqdn": "[concat(variables('webappName'),'.azurewebsites.us')]" //this is for MAG
-                    }
-                  ]
-                }
-              }
-            ],
-            "backendHttpSettingsCollection": [
-              {
-                "name": "Default",
-                "properties": {
-                  "port": 443,
-                  "protocol": "Https",
-                  "cookieBasedAffinity": "Disabled",
-                  "hostName": "[concat(variables('webappName'),'.azurewebsites.net')]",  //this is for MAC
-                  //"hostName": "[concat(variables('webappName'),'.azurewebsites.us')]", //this is for MAG
-                  "pickHostNameFromBackendAddress": false,
-                  "affinityCookieName": "ApplicationGatewayAffinity",
-                  "requestTimeout": 20
-                }
-              }
-            ],
-            "httpListeners": [
-              {
-                "name": "Public-HTTP",
-                "properties": {
-                  "frontendIPConfiguration": {
-                    "id": "[concat(variables('applicationGatewayId'), '/frontendIPConfigurations/appGwPublicFrontendIp')]"
-                  },
-                  "frontendPort": {
-                    "id": "[concat(variables('applicationGatewayId'), '/frontendPorts/port_80')]"
-                  },
-                  "protocol": "Http"
-                }
-              }
-            ],
-            "requestRoutingRules": [
-              {
-                "Name": "PublicIPRule",
-                "properties": {
-                  "RuleType": "Basic",
-                  "httpListener": {
-                    "id": "[concat(variables('applicationGatewayId'), '/httpListeners/Public-HTTP')]"
-                  },
-                  "backendAddressPool": {
-                    "id": "[concat(variables('applicationGatewayId'), '/backendAddressPools/PAAS-APP')]"
-                  },
-                  "backendHttpSettings": {
-                    "id": "[concat(variables('applicationGatewayId'), '/backendHttpSettingsCollection/Default')]"
-                  }
-                }
-              }
-            ],
-            "enableHttp2": false,
-            "firewallPolicy": {
-              "id": "[resourceId('Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies', variables('azAppGatewayPolicyName'))]"
-            }
-          }
-        },
-        {
-          "type": "Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies",
-          "apiVersion": "2019-09-01",
-          "name": "[variables('azAppGatewayPolicyName')]",
-          "dependsOn": [],
-          "location": "[parameters('location')]",
-          "tags": {},
-          "properties": {
-            "customRules": [
-              {
-                "name": "SentinelBlockIP",
-                "priority": 10,
-                "ruleType": "MatchRule",
-                "action": "Block",
-                "matchConditions": [
-                  {
-                    "matchVariables": [
-                      {
-                        "variableName": "RemoteAddr"
-                      }
-                    ],
-                    "operator": "IPMatch",
-                    "negationConditon": false,
-                    "matchValues": [
-                      "104.210.223.108"
-                    ],
-                    "transforms": []
-                  }
-                ]
-              },
-              {
-                "name": "BlockInternetExplorer11",
-                "priority": 30,
-                "ruleType": "MatchRule",
-                "action": "Block",
-                "matchConditions": [
-                  {
-                    "matchVariables": [
-                      {
-                        "variableName": "RequestHeaders",
-                        "selector": "User-Agent"
-                      }
-                    ],
-                    "operator": "Contains",
-                    "negationConditon": false,
-                    "matchValues": [
-                      "rv:11.0"
-                    ],
-                    "transforms": []
-                  }
-                ]
-              }
-            ],
-            "policySettings": {
-              "fileUploadLimitInMb": 100,
-              "maxRequestBodySizeInKb": 128,
-              "mode": "Prevention",
-              "requestBodyCheck": true,
-              "state": "Enabled"
-            },
-            "managedRules": {
-              "exclusions": [],
-              "managedRuleSets": [
+            "tags": {},
+            "properties": {
+                "sku": {
+                "name": "WAF_v2",
+                "tier": "WAF_v2",
+                "capacity": 2
+                },
+                "gatewayIPConfigurations": [
                 {
-                  "ruleSetType": "OWASP",
-                  "ruleSetVersion": "3.1",
-                  "ruleGroupOverrides": [
-                    {
-                      "ruleGroupName": "REQUEST-920-PROTOCOL-ENFORCEMENT",
-                      "rules": [
-                        {
-                          "ruleId": "920350",
-                          "state": "Disabled"
-                        },
-                        {
-                          "ruleId": "920320",
-                          "state": "Disabled"
-                        }
-                      ]
+                    "name": "appGatewayIpConfig",
+                    "properties": {
+                    "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAGTWsubnetName'))]"
                     }
-                  ]
+                    }
                 }
-              ]
+                ],
+                "frontendIPConfigurations": [
+                {
+                    "name": "appGwPublicFrontendIp",
+                    "properties": {
+                    "PublicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('azAppGatewayPublicIPName'))]"
+                    }
+                    }
+                },
+                {
+                    "name": "appGwPrivateFrontendIp",
+                    "properties": {
+                    "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAGTWsubnetName'))]"
+                    },
+                    "privateIPAddress": "[variables('AppGTWPrivIP')]",
+                    "privateIPAllocationMethod": "Static"
+                    }
+                }
+                ],
+                "frontendPorts": [
+                {
+                    "name": "port_80",
+                    "properties": {
+                    "port": 80
+                    }
+                },
+                {
+                    "name": "port_8080",
+                    "properties": {
+                    "port": 8080
+                    }
+                },
+                {
+                    "name": "port_443",
+                    "properties": {
+                    "port": 443
+                    }
+                }
+                ],
+                "backendAddressPools": [
+                {
+                    "name": "PAAS-APP",
+                    "properties": {
+                    "backendAddresses": [
+                        {
+                        "fqdn": "[concat(variables('webappName'),'.azurewebsites.net')]"  //this is for MAC
+                        //"fqdn": "[concat(variables('webappName'),'.azurewebsites.us')]" //this is for MAG
+                        }
+                    ]
+                    }
+                }
+                ],
+                "backendHttpSettingsCollection": [
+                {
+                    "name": "Default",
+                    "properties": {
+                    "port": 443,
+                    "protocol": "Https",
+                    "cookieBasedAffinity": "Disabled",
+                    "hostName": "[concat(variables('webappName'),'.azurewebsites.net')]",  //this is for MAC
+                    //"hostName": "[concat(variables('webappName'),'.azurewebsites.us')]", //this is for MAG
+                    "pickHostNameFromBackendAddress": false,
+                    "affinityCookieName": "ApplicationGatewayAffinity",
+                    "requestTimeout": 20
+                    }
+                }
+                ],
+                "httpListeners": [
+                {
+                    "name": "Public-HTTP",
+                    "properties": {
+                    "frontendIPConfiguration": {
+                        "id": "[concat(variables('applicationGatewayId'), '/frontendIPConfigurations/appGwPublicFrontendIp')]"
+                    },
+                    "frontendPort": {
+                        "id": "[concat(variables('applicationGatewayId'), '/frontendPorts/port_80')]"
+                    },
+                    "protocol": "Http"
+                    }
+                }
+                ],
+                "requestRoutingRules": [
+                {
+                    "Name": "PublicIPRule",
+                    "properties": {
+                    "RuleType": "Basic",
+                    "httpListener": {
+                        "id": "[concat(variables('applicationGatewayId'), '/httpListeners/Public-HTTP')]"
+                    },
+                    "backendAddressPool": {
+                        "id": "[concat(variables('applicationGatewayId'), '/backendAddressPools/PAAS-APP')]"
+                    },
+                    "backendHttpSettings": {
+                        "id": "[concat(variables('applicationGatewayId'), '/backendHttpSettingsCollection/Default')]"
+                    }
+                    }
+                }
+                ],
+                "enableHttp2": false,
+                "firewallPolicy": {
+                "id": "[resourceId('Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies', variables('azAppGatewayPolicyName'))]"
+                }
             }
-          }
+            },
+            {
+                //Application Gateway Firewall Policy (WAF)
+                "type": "Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies",
+                "apiVersion": "2019-09-01",
+                "name": "[variables('azAppGatewayPolicyName')]",
+                "dependsOn": [],
+                "location": "[parameters('location')]",
+                "tags": {},
+                "properties": {
+                    "customRules": [
+                    {
+                        "name": "SentinelBlockIP",
+                        "priority": 10,
+                        "ruleType": "MatchRule",
+                        "action": "Block",
+                        "matchConditions": [
+                        {
+                            "matchVariables": [
+                            {
+                                "variableName": "RemoteAddr"
+                            }
+                            ],
+                            "operator": "IPMatch",
+                            "negationConditon": false,
+                            "matchValues": [
+                            "104.210.223.108"
+                            ],
+                            "transforms": []
+                        }
+                        ]
+                    },
+                    {
+                        "name": "BlockInternetExplorer11",
+                        "priority": 30,
+                        "ruleType": "MatchRule",
+                        "action": "Block",
+                        "matchConditions": [
+                        {
+                            "matchVariables": [
+                            {
+                                "variableName": "RequestHeaders",
+                                "selector": "User-Agent"
+                            }
+                            ],
+                            "operator": "Contains",
+                            "negationConditon": false,
+                            "matchValues": [
+                            "rv:11.0"
+                            ],
+                            "transforms": []
+                        }
+                        ]
+                    }
+                    ],
+                    "policySettings": {
+                    "fileUploadLimitInMb": 100,
+                    "maxRequestBodySizeInKb": 128,
+                    "mode": "Prevention",
+                    "requestBodyCheck": true,
+                    "state": "Enabled"
+                    },
+                    "managedRules": {
+                    "exclusions": [],
+                    "managedRuleSets": [
+                        {
+                        "ruleSetType": "OWASP",
+                        "ruleSetVersion": "3.1",
+                        "ruleGroupOverrides": [
+                            {
+                            "ruleGroupName": "REQUEST-920-PROTOCOL-ENFORCEMENT",
+                            "rules": [
+                                {
+                                "ruleId": "920350",
+                                "state": "Disabled"
+                                },
+                                {
+                                "ruleId": "920320",
+                                "state": "Disabled"
+                                }
+                            ]
+                            }
+                        ]
+                        }
+                    ]
+                    }
+                }
         },
-
-
-//--
-
-
-
-
         {
             //Blue Team Az Bastion
             "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
@@ -1300,16 +1460,16 @@
             "condition": "[equals(parameters('remoteAccessMode'),'AllowPublicIP')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2018-11-01",
-            "name": "[concat('pip-', variables('allEndpoints')[copyIndex('vmPublicIpCopy')].vmName)]",
+            "name": "[concat('pip-', variables('allBlueTeamEnpoints')[copyIndex('vmPublicIpCopy')].vmName)]",
             "location": "[parameters('location')]",
             "copy": {
                 "name": "vmPublicIpCopy",
-                "count": "[length(variables('allEndpoints'))]"
+                "count": "[length(variables('allBlueTeamEnpoints'))]"
             },
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
                 "dnsSettings": {
-                    "domainNameLabel": "[toLower(concat(variables('allEndpoints')[copyIndex('vmPublicIpCopy')].vmName, '-', uniquestring(resourceGroup().id, parameters('utcValue'))))]"
+                    "domainNameLabel": "[toLower(concat(variables('allBlueTeamEnpoints')[copyIndex('vmPublicIpCopy')].vmName, '-', uniquestring(resourceGroup().id, parameters('utcValue'))))]"
                 }
             }
         },
@@ -1317,15 +1477,15 @@
             //Blue Team Netw Interface
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2019-11-01",
-            "name": "[concat('nic-', variables('allEndpoints')[copyIndex('vmNetworkInterfaceCopy')].vmName)]",
+            "name": "[concat('nic-', variables('allBlueTeamEnpoints')[copyIndex('vmNetworkInterfaceCopy')].vmName)]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses/', concat('pip-', variables('allEndpoints')[copyIndex('vmNetworkInterfaceCopy')].vmName))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses/', concat('pip-', variables('allBlueTeamEnpoints')[copyIndex('vmNetworkInterfaceCopy')].vmName))]",
                 "[resourceId('Microsoft.Network/virtualNetworks/', variables('btvirtualNetworkName'))]"
             ],
             "copy": {
                 "name": "vmNetworkInterfaceCopy",
-                "count": "[length(variables('allEndpoints'))]"
+                "count": "[length(variables('allBlueTeamEnpoints'))]"
             },
             "properties": {
                 "ipConfigurations": [
@@ -1333,10 +1493,10 @@
                         "name": "ipconfig1",
                         "properties": {
                             "privateIPAllocationMethod": "Static",
-                            "privateIPAddress": "[variables('allEndpoints')[copyIndex('vmNetworkInterfaceCopy')].ipAddress]",
-                            "publicIPAddress": "[if(equals(parameters('remoteAccessMode'),'AllowPublicIP'), json(concat('{\"id\":', '\"', resourceId('Microsoft.Network/publicIPAddresses/', concat('pip-', variables('allEndpoints')[copyIndex('vmNetworkInterfaceCopy')].vmName)),'\"}')),json('null'))]",
+                            "privateIPAddress": "[variables('allBlueTeamEnpoints')[copyIndex('vmNetworkInterfaceCopy')].ipAddress]",
+                            "publicIPAddress": "[if(equals(parameters('remoteAccessMode'),'AllowPublicIP'), json(concat('{\"id\":', '\"', resourceId('Microsoft.Network/publicIPAddresses/', concat('pip-', variables('allBlueTeamEnpoints')[copyIndex('vmNetworkInterfaceCopy')].vmName)),'\"}')),json('null'))]",
                             "subnet": {
-                                "id": "[variables('allEndpoints')[copyIndex('vmNetworkInterfaceCopy')].subnetref]"
+                                "id": "[variables('allBlueTeamEnpoints')[copyIndex('vmNetworkInterfaceCopy')].subnetref]"
                             }
                         }
                     }
@@ -1395,31 +1555,32 @@
             //BT VMs
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2018-10-01",
-            "name": "[variables('allEndpoints')[copyIndex('vmVMCopy')].vmName]",
+            "name": "[variables('allBlueTeamEnpoints')[copyIndex('vmVMCopy')].vmName]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-                "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic-', variables('allEndpoints')[copyIndex('vmVMCopy')].vmName))]"
+                "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic-', variables('allBlueTeamEnpoints')[copyIndex('vmVMCopy')].vmName))]"
             ],
             "copy": {
                 "name": "vmVMCopy",
-                "count": "[length(variables('allEndpoints'))]"
+                "count": "[length(variables('allBlueTeamEnpoints'))]"
             },
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[variables('allEndpoints')[copyIndex('vmVMCopy')].vmSize]"
+                    "vmSize": "[variables('allBlueTeamEnpoints')[copyIndex('vmVMCopy')].vmSize]"
                 },
                 "osProfile": {
-                    "computerName": "[variables('allEndpoints')[copyIndex('vmVMCopy')].vmName]",
+                    "computerName": "[variables('allBlueTeamEnpoints')[copyIndex('vmVMCopy')].vmName]",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]"
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "linuxConfiguration": "[if(equals(variables('linuxAuthenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "publisher": "[variables('allEndpoints')[copyIndex('vmVMCopy')].publisher]",
-                        "offer": "[variables('allEndpoints')[copyIndex('vmVMCopy')].offer]",
-                        "sku": "[variables('allEndpoints')[copyIndex('vmVMCopy')].sku]",
-                        "version": "[variables('allEndpoints')[copyIndex('vmVMCopy')].version]"
+                        "publisher": "[variables('allBlueTeamEnpoints')[copyIndex('vmVMCopy')].publisher]",
+                        "offer": "[variables('allBlueTeamEnpoints')[copyIndex('vmVMCopy')].offer]",
+                        "sku": "[variables('allBlueTeamEnpoints')[copyIndex('vmVMCopy')].sku]",
+                        "version": "[variables('allBlueTeamEnpoints')[copyIndex('vmVMCopy')].version]"
                     },
                     "osDisk": {
                         "createOption": "FromImage"
@@ -1429,7 +1590,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-', variables('allEndpoints')[copyIndex('vmVMCopy')].vmName))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-', variables('allBlueTeamEnpoints')[copyIndex('vmVMCopy')].vmName))]"
                         }
                     ]
                 },
@@ -2107,7 +2268,7 @@
         {
             //Deployment of the enabling MMA on all VMs using linked template
             "condition": "[parameters('enableMonitoringAgent')]",
-            "name": "[concat(variables('allEndpoints')[copyIndex('vmMMASetUpCopy')].vmName, '/OMSExtension')]",
+            "name": "[concat(variables('allBlueTeamEnpoints')[copyIndex('vmMMASetUpCopy')].vmName, '/OMSExtension')]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "apiVersion": "2019-12-01",
             "location": "[parameters('location')]",
@@ -2118,7 +2279,7 @@
             ],
             "copy": {
                 "name": "vmMMASetUpCopy",
-                "count": "[length(variables('allEndpoints'))]"
+                "count": "[length(variables('allBlueTeamEnpoints'))]"
             },
             "properties": {
                 "publisher": "Microsoft.EnterpriseCloud.Monitoring",
@@ -2186,7 +2347,7 @@
         },
         "allWinVMsDeployed": {
             "type": "array",
-            "value": "[variables('allEndpoints')]"
+            "value": "[variables('allBlueTeamEnpoints')]"
         },
         "allWinServersDeployed": {
             "type": "array",
