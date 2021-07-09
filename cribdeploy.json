@@ -773,6 +773,8 @@
                 "publisher": "Canonical",
                 "offer": "UbuntuServer",
                 "sku": "18.04-LTS",
+                "name": "Ubuntu",
+                "product": "Ubuntu",
                 "version": "latest"
             }
         ],
