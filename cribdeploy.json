@@ -772,8 +772,6 @@
                 "vmSize": "[parameters('vmSize')]",
                 "publisher": "Canonical",
                 "product": "UbuntuServer",
-                "name": "UbuntuServer",
-                "offer": "UbuntuServer",
                 "sku": "18.04-LTS",
                 "version": "latest"
             }
