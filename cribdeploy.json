@@ -1634,7 +1634,7 @@
                 "count": "[length(variables('allRedTeamEndpoints'))]"
             },
             "plan": {
-                "name": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].name]",
+                "name": "[if(equals(variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName, 'c2Server'),'null',variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].name)]",
                 "publisher": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].publisher]",
                 "product": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].product]"
             },
