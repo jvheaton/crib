@@ -1,0 +1,332 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "utcValue": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "string"
+        },
+        "authenticationType": {
+            "type": "string"
+        },
+        "adminPasswordOrKey": {
+            "type": "securestring"
+        },
+        "remoteAccessMode": {
+            "type": "string"
+        },
+        "allowedIPAddresses": {
+            "type": "string"
+        },
+        "azureBastionHostName": {
+            "type": "string"
+        },
+        "vmName": {
+            "type": "string"
+        },
+        "vmSize": {
+            "type": "string"
+        },
+        "ubuntuSKU": {
+            "type": "string"
+        },
+        "virtualNetworkName": {
+            "type": "string"
+        },
+        "virtualNetworkAddressRange": {
+            "type": "string"
+        },
+        "subnetRange": {
+            "type": "string"
+        },
+        "VMPrivateIPAddress": {
+            "type": "string"
+        },
+        "subnetName": {
+            "type": "string"
+        },
+        "azureBastionSubnetRange": {
+            "type": "string"
+        },
+        "c2Framework": {
+            "type": "string",
+            "defaultValue": "empire"
+        },
+        "_artifactsLocation": {
+            "type": "string"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring"
+        },
+        "location": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "storageAccountName": "[concat(uniquestring(resourceGroup().id, parameters('utcValue')))]",
+
+        "virtualNetworkName": "[parameters('virtualNetworkName')]",
+        "virtualNetworkAddressRange": "[parameters('virtualNetworkAddressRange')]",
+
+        "subnetName": "[parameters('subnetName')]",
+        "subnetRange": "[parameters('subnetRange')]",
+        "vmPrivateIPPrefixArray": "[take(split(variables('subnetRange'),'.'),3)]",
+        "vmPrivateIPAddresPrefix": "[format('{0}.{1}.{2}.',variables('vmPrivateIPPrefixArray')[0], variables('vmPrivateIPPrefixArray')[1], variables('vmPrivateIPPrefixArray')[2])]",
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+
+        "bastionSubnetName": "AzureBastionSubnet",
+
+        "nsg-id": { "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-ssh-allow')]" },
+        "networkSecurityGroup": "[if(equals(parameters('remoteAccessMode'), 'AllowPublicIP'), variables('nsg-id'), json('null'))]",
+
+        "subnets": [
+            {
+                "name": "[variables('subnetName')]",
+                "properties": {
+                    "addressPrefix": "[variables('subnetRange')]",
+                    "networkSecurityGroup": "[variables('networkSecurityGroup')]"
+                }
+            }
+        ],
+        "azureBastionSubnet": [
+            {
+                "name": "[variables('bastionSubnetName')]",
+                "properties": {
+                    "addressPrefix": "[parameters('azureBastionSubnetRange')]"
+                }
+            }
+        ],
+        "allSubnets": "[if(equals(parameters('remoteAccessMode'),'AzureBastionHost'), concat(variables('subnets'), variables('azureBastionSubnet')), variables('subnets'))]",
+
+        "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+                "publicKeys": [
+                    {
+                        "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                        "keyData": "[parameters('adminPasswordOrKey')]"
+                    }
+                ]
+            }
+        },
+
+        "c2SetupScript": "[uri(parameters('_artifactsLocation'), concat('resources/scripts/bash/Install-C2s.sh', parameters('_artifactsLocationSasToken')))]",
+        "dockerSetupScript": "[uri(parameters('_artifactsLocation'), concat('resources/scripts/bash/Install-Docker.sh', parameters('_artifactsLocationSasToken')))]",
+        "vmName": "[parameters('vmName')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2018-11-01",
+            "name": "[variables('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {
+            }
+        },
+        {
+            "condition": "[equals(parameters('remoteAccessMode'), 'AllowPublicIP')]",
+            "name": "nsg-ssh-allow",
+            "comments": "Default Network Security Group for Linux endpoints",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-08-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "default-allow-22",
+                        "properties": {
+                            "priority": 100,
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "destinationPortRange": "22",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "[parameters('allowedIPAddresses')]",
+                            "destinationAddressPrefix": "*"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-02-01",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-ssh-allow')]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('virtualNetworkAddressRange')]"
+                    ]
+                },
+                "subnets": "[variables('allSubnets')]"
+            }
+        },
+        {
+            "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-11-01",
+            "name": "[concat('pip-', parameters('azureBastionHostName'))]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "condition": "[equals(parameters('remoteAccessMode'),'AzureBastionHost')]",
+            "type": "Microsoft.Network/bastionHosts",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('azureBastionHostName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses/', concat('pip-', parameters('azureBastionHostName')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "IpConf",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat('pip-', parameters('azureBastionHostName')))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('bastionSubnetName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "condition": "[equals(parameters('remoteAccessMode'),'AllowPublicIP')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-11-01",
+            "name": "[concat('pip-', variables('vmName'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[toLower(concat(variables('vmName'), '-', uniquestring(resourceGroup().id, parameters('utcValue'))))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-11-01",
+            "name": "[concat('nic-', variables('vmName'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses/', concat('pip-', variables('vmName')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[parameters('VMPrivateIPAddress')]",
+                            "publicIPAddress": "[if(equals(parameters('remoteAccessMode'),'AllowPublicIP'), json(concat('{\"id\":', '\"', resourceId('Microsoft.Network/publicIPAddresses/', concat('pip-', variables('vmName'))),'\"}')),json('null'))]",
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-03-01",
+            "name": "[variables('vmName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic-', variables('vmName')))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "createOption": "fromImage"
+                    },
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "[parameters('ubuntuSKU')]",
+                        "version": "latest"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic-', variables('vmName')))]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPasswordOrKey')]",
+                    "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-03-01",
+            "name": "[concat(variables('vmName'), '/C2Setup')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.1",
+                "autoUpgradeMinorVersion": true,
+                "settings": {},
+                "protectedSettings": {
+                    "commandToExecute": "[concat('bash Install-C2s.sh -r', ' ', parameters('c2Framework'))]",
+                    "fileUris": [
+                        "[variables('dockerSetupScript')]",
+                        "[variables('c2SetupScript')]"
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "vmName": {
+            "type": "string",
+            "value": "[variables('vmName')]"
+        },
+        "vmResourceID": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "value": "[parameters('virtualNetworkName')]"
+        },
+        "virtualNetworkId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+        }
+    }
+}
