@@ -1621,7 +1621,7 @@
         },
         {
             //RT Kali and Infection Monkey VMs
-            "condition": "[not(equals(variables('allRedTeamEndpoints')[copyIndex('vnVMCopy')].vnmName,'c2Server'))]",
+            "condition": "[not(equals(variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vnmName,'c2Server'))]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2018-10-01",
             "name": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName]",
