@@ -1621,6 +1621,7 @@
         },
         {
             //RT Kali and Infection Monkey VMs
+            "condition": "[not(equals(variables('allRedTeamEndpoints')[copyIndex('vnVMCopy')].vnmName,'c2Server'))]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2018-10-01",
             "name": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName]",
@@ -1634,11 +1635,10 @@
                 "count": "[length(variables('allRedTeamEndpoints'))]"
             },
             "plan": {
-                "name": "[if(equals(variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName, 'c2Server'),null(),variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].name)]",
+                //"name": "[if(equals(variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName, 'c2Server'),null(),variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].name)]",
+                "name": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].name]",
                 "publisher": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].publisher]",
-                "product": "[if(equals(variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName, 'c2Server'),null(),variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].product)]"
-                //"publisher": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].publisher]",
-                //"product": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].product]"
+                "product": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].product]"
             },
             "properties": {
                 "hardwareProfile": {
