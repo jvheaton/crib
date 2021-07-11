@@ -840,6 +840,8 @@
         "allServers": "[concat(variables('allWinServers'),variables('domainController'), variables('adfsServer'))]",
         "allBlueTeamEnpoints": "[concat(variables('allWinWKS'), variables('allWinServers'),variables('domainController'), variables('adfsServer'), variables('allUbuntuServers'),variables('allCentOSServers'),variables('allRedHatServers'))]", //rename allendpoints to allBlueTeamEnpoints here and everywere esle
         "allRedTeamEndpoints": "[concat(variables('kaliLinux'), variables('infectionMonkey'), variables('c2Server'))]",
+        "redTeamKaliAndInfectionMonkey": "[concat(variables('kaliLinux'), variables('infectionMonkey'))]",
+        "redTeamLinuxAndWindows": "[concat(variables('c2Server'))]",
         "domainNameArray": "[split(parameters('domainFQDN'),'.')]",
         "workstationsOUPath": "[concat('OU=Workstations; DC=', variables('domainNameArray')[0], '; DC=', variables('domainNameArray')[1])]",
         "serversOUPath": "[concat('OU=Servers; DC=', variables('domainNameArray')[0], '; DC=', variables('domainNameArray')[1])]",
@@ -1621,40 +1623,38 @@
         },
         {
             //RT Kali and Infection Monkey VMs
-            "condition": "[not(equals(variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName,'c2Server'))]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2018-10-01",
-            "name": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName]",
+            "name": "[variables('redTeamKaliAndInfectionMonkey')[copyIndex('vmVMCopy')].vmName]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-                "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic-', variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName))]"
+                "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic-', variables('redTeamKaliAndInfectionMonkey')[copyIndex('vmVMCopy')].vmName))]"
             ],
             "copy": {
                 "name": "vmVMCopy",
-                "count": "[length(variables('allRedTeamEndpoints'))]"
+                "count": "[length(variables('redTeamKaliAndInfectionMonkey'))]"
             },
             "plan": {
-                //"name": "[if(equals(variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName, 'c2Server'),null(),variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].name)]",
-                "name": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].name]",
-                "publisher": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].publisher]",
-                "product": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].product]"
+                "name": "[variables('redTeamKaliAndInfectionMonkey')[copyIndex('vmVMCopy')].name]",
+                "publisher": "[variables('redTeamKaliAndInfectionMonkey')[copyIndex('vmVMCopy')].publisher]",
+                "product": "[variables('redTeamKaliAndInfectionMonkey')[copyIndex('vmVMCopy')].product]"
             },
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmSize]"
+                    "vmSize": "[variables('redTeamKaliAndInfectionMonkey')[copyIndex('vmVMCopy')].vmSize]"
                 },
                 "osProfile": {
-                    "computerName": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName]",
+                    "computerName": "[variables('redTeamKaliAndInfectionMonkey')[copyIndex('vmVMCopy')].vmName]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "publisher": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].publisher]",
-                        "offer": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].offer]",
-                        "sku": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].sku]",
-                        "version": "[variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].version]"
+                        "publisher": "[variables('redTeamKaliAndInfectionMonkey')[copyIndex('vmVMCopy')].publisher]",
+                        "offer": "[variables('redTeamKaliAndInfectionMonkey')[copyIndex('vmVMCopy')].offer]",
+                        "sku": "[variables('redTeamKaliAndInfectionMonkey')[copyIndex('vmVMCopy')].sku]",
+                        "version": "[variables('redTeamKaliAndInfectionMonkey')[copyIndex('vmVMCopy')].version]"
                     },
                     "osDisk": {
                         "createOption": "FromImage"
@@ -1664,7 +1664,58 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-', variables('allRedTeamEndpoints')[copyIndex('vmVMCopy')].vmName))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-', variables('redTeamKaliAndInfectionMonkey')[copyIndex('vmVMCopy')].vmName))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        },
+        {
+            //RT Linux/Windows VMs
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2018-10-01",
+            "name": "[variables('redTeamLinuxAndWindows')[copyIndex('vmVMCopy')].vmName]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic-', variables('redTeamLinuxAndWindows')[copyIndex('vmVMCopy')].vmName))]"
+            ],
+            "copy": {
+                "name": "vmVMCopy",
+                "count": "[length(variables('redTeamLinuxAndWindows'))]"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('redTeamLinuxAndWindows')[copyIndex('vmVMCopy')].vmSize]"
+                },
+                "osProfile": {
+                    "computerName": "[variables('redTeamLinuxAndWindows')[copyIndex('vmVMCopy')].vmName]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "linuxConfiguration": "[if(equals(variables('linuxAuthenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('redTeamLinuxAndWindows')[copyIndex('vmVMCopy')].publisher]",
+                        "offer": "[variables('redTeamLinuxAndWindows')[copyIndex('vmVMCopy')].offer]",
+                        "sku": "[variables('redTeamLinuxAndWindows')[copyIndex('vmVMCopy')].sku]",
+                        "version": "[variables('redTeamLinuxAndWindows')[copyIndex('vmVMCopy')].version]"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage"
+                    },
+                    "dataDisks": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-', variables('redTeamLinuxAndWindows')[copyIndex('vmVMCopy')].vmName))]"
                         }
                     ]
                 },
