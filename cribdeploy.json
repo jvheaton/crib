@@ -429,12 +429,13 @@
             },
             "defaultValue": "192.170.0.0/26"
         },
-        "hbSubnetName": {
+        "hbAzFwSubnetName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the subnet"
             },
-            "defaultValue": "AzureFirewallSubnet"
+            "defaultValue": "AzureFirewallSubnet",
+            "allowedValues": ["AzureFirewallSubnet"]
         },
         "hbAgtwSubnetRange": {
             "type": "string",
@@ -539,7 +540,7 @@
         "btsubnetRange": "[parameters('btsubnetRange')]",
         "rtsubnetName": "[parameters('rtsubnetName')]",
         "rtsubnetRange": "[parameters('rtsubnetRange')]",
-        "hbsubnetName": "[parameters('hbsubnetName')]",
+        "hbAzFwSubnetName": "[parameters('hbAzFwSubnetName')]",
         "hbsubnetRange": "[parameters('hbsubnetRange')]",
         "hbAGTWsubnetName": "[parameters('hbAGTWsubnetName')]",
         "hbAGTWsubnetRange": "[parameters('hbAGTWsubnetRange')]",
@@ -574,7 +575,7 @@
         ],
         "hbsubnets": [
             {
-                "name": "[variables('hbsubnetName')]",
+                "name": "[variables('hbAzFwSubnetName')]",
                 "properties": {
                     "addressPrefix": "[variables('hbsubnetRange')]"
                 }
@@ -889,6 +890,36 @@
             "properties": {}
         },
         {
+            //Firwall Premium
+            "type": "Microsoft.Network/azureFirewalls",
+            "apiVersion": "2020-11-01",
+            "name": "[variables('azFirewallName')]",
+            "location":"[parameters('location')]",
+                  "dependsOn": [
+                        "[resourceId('Microsoft.Network/publicIpAddresses', variables('azFirewallPublicIPName'))]",
+                        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hb'))]",
+                        "[resourceId('Microsoft.Network/firewallPolicies', variables('azFirewallPolicyName'))]",
+                        "[resourceId('Microsoft.Network/applicationGateways', variables('azAppGatewayName'))]"
+                    ],
+            "tags": {},
+            "properties": {
+                "sku": {
+                    "name": "AZFW_VNet",
+                    "tier": "Premium"
+                },
+                "threatIntelMode": "Alert",
+                "additionalProperties": {},
+                "ipConfigurations": [],
+                "networkRuleCollections": [],
+                "applicationRuleCollections": [],
+                "natRuleCollections": [],
+                "firewallPolicy": {
+                    "id": "[resourceId('Microsoft.Network/firewallPolicies',variables('azFirewallPolicyName'))]"
+                }
+            }
+        },
+        {   
+            //Firewall Policy
             "type": "Microsoft.Network/firewallPolicies",
             "apiVersion": "2019-06-01",
             "name": "[variables('azFirewallName')]",
