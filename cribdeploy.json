@@ -912,10 +912,10 @@
         {
             "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
             "apiVersion": "2020-11-01",
-            "name": "[concat(variables('azFirewallName'), '/DefaultNetworkRuleCollectionGroup')]",
+            "name": "[concat(variables('azFirewallPolicyName'), '/DefaultNetworkRuleCollectionGroup')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/firewallPolicies', variables('azFirewallName'))]"
+                "[resourceId('Microsoft.Network/firewallPolicies', variables('azFirewallPolicyName'))]"
             ],
             "properties": {
                 "priority": 200,
