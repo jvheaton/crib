@@ -979,8 +979,8 @@
             "location":"[parameters('location')]",
                   "dependsOn": [
                         "[resourceId('Microsoft.Network/publicIpAddresses', variables('azFirewallPublicIPName'))]",
-                        //"[resourceId('Microsoft.Network/virtualNetworks/', variables('hbvirtualNetworkName'))]",
-                        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAzFwSubnetName'))]",
+                        "[resourceId('Microsoft.Network/virtualNetworks/', variables('hbvirtualNetworkName'))]",
+                        //"[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAzFwSubnetName'))]",
                         "[resourceId('Microsoft.Network/firewallPolicies', variables('azFirewallPolicyName'))]",
                         "[resourceId('Microsoft.Network/applicationGateways', variables('azAppGatewayName'))]"
                     ],
