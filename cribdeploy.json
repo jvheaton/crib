@@ -971,48 +971,7 @@
                 ]
             }
         },
-        {
-            //Firwall Premium
-            "type": "Microsoft.Network/azureFirewalls",
-            "apiVersion": "2020-11-01",
-            "name": "[variables('azFirewallName')]",
-            "location":"[parameters('location')]",
-                  "dependsOn": [
-                        "[resourceId('Microsoft.Network/publicIpAddresses', variables('azFirewallPublicIPName'))]",
-                        //"[resourceId('Microsoft.Network/virtualNetworks/', variables('hbvirtualNetworkName'))]",
-                        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAzFwSubnetName'))]",
-                        "[resourceId('Microsoft.Network/firewallPolicies', variables('azFirewallPolicyName'))]",
-                        "[resourceId('Microsoft.Network/applicationGateways', variables('azAppGatewayName'))]"
-                    ],
-            "tags": {},
-            "properties": {
-                "sku": {
-                    "name": "AZFW_VNet",
-                    "tier": "Premium"
-                },
-                "threatIntelMode": "Alert",
-                "additionalProperties": {},
-                "ipConfigurations": [
-                    {
-                        "name": "[variables('azFirewallPublicIPName')]",
-                        "properties": {
-                        "subnet": {
-                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAzFwSubnetName'))]"
-                        },
-                        "publicIPAddress": {
-                            "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('azFirewallPublicIPName'))]"
-                        }
-                        }
-                    }
-                ],
-                "networkRuleCollections": [],
-                "applicationRuleCollections": [],
-                "natRuleCollections": [],
-                "firewallPolicy": {
-                    "id": "[resourceId('Microsoft.Network/firewallPolicies',variables('azFirewallPolicyName'))]"
-                }
-            }
-        },
+
 
         {
             //This NSG is created only when Remote Access Mode is selected. Needs a Public IP only /////----------duplicate this and create a NSG for Linux SSH
