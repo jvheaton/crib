@@ -897,7 +897,7 @@
             "location":"[parameters('location')]",
                   "dependsOn": [
                         "[resourceId('Microsoft.Network/publicIpAddresses', variables('azFirewallPublicIPName'))]",
-                        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hb'))]",
+                        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAzFwSubnetName'))]",
                         "[resourceId('Microsoft.Network/firewallPolicies', variables('azFirewallPolicyName'))]",
                         "[resourceId('Microsoft.Network/applicationGateways', variables('azAppGatewayName'))]"
                     ],
@@ -922,7 +922,7 @@
             //Firewall Policy
             "type": "Microsoft.Network/firewallPolicies",
             "apiVersion": "2019-06-01",
-            "name": "[variables('azFirewallName')]",
+            "name": "[variables('azFirewallPolicyName')]",
             "location": "[parameters('location')]",
             "dependsOn": [],
             "tags": {},
