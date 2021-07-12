@@ -92,7 +92,7 @@
         },
         "adfsPassword": {
             "type": "securestring",
-            "defaultValue": "P@ssword0123",
+            "defaultValue": "P@ssword0123", // clean password from code
             "minLength": 12,
             "metadata": {
                 "description": "Password for ADFS user account. The password must be at least 12 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter"
@@ -549,7 +549,7 @@
         "rtvmPrivateIPAddresPrefix": "[format('{0}.{1}.{2}.',variables('rtvmPrivateIPPrefixArray')[0], variables('rtvmPrivateIPPrefixArray')[1], variables('rtvmPrivateIPPrefixArray')[2])]",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('btvirtualNetworkName'), variables('btsubnetName'))]",
         "rtsubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('rtvirtualNetworkName'), variables('rtsubnetName'))]",
-        "nsg-default-name": "nsg-rdp-allow",
+        "nsg-default-name": "nsg-default",
         "nsg-id": {
             "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-default-name'))]"
         },
@@ -645,7 +645,7 @@
         "installSysmonScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/software/Install-Sysmon.zip', parameters('_artifactsLocationSasToken')))]",
         "installAADConnectScript": "[uri(parameters('_artifactsLocation'), concat('scripts/powershell/dsc/mis/Install-AADConnect.zip', parameters('_artifactsLocationSasToken')))]",
 
-        // Windows 10 Virtual Machine Properties
+        // Blue Team Virtual Machine Properties
         "copy": [
             {
                 "name": "allWinWKS",
@@ -733,13 +733,14 @@
                 }
             }
         ],
+        // Red Team Virtual Machines Properties
         "kaliLinux": [
             {
                 "tag": "kaliLinux",
                 "vmName": "crKali",
                 "os": "Linux",
                 "subnetref": "[variables('rtsubnetRef')]",
-                "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'14')]", //change to 4
+                "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'4')]", //change to 4 - it was 14
                 "vmSize": "[parameters('vmSize')]",
                 "publisher": "kali-linux",
                 "product": "kali-linux",
@@ -755,7 +756,7 @@
                 "vmName": "crInfMonkey",
                 "os": "Linux",
                 "subnetref": "[variables('rtsubnetRef')]",
-                "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'15')]", //change to 5
+                "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'5')]", //change to 5 - it was 15
                 "vmSize": "[parameters('vmSize')]",
                 "publisher": "guardicore",
                 "product": "infection_monkey",
@@ -771,7 +772,7 @@
                 "vmName": "c2Server",
                 "os": "Linux",
                 "subnetref": "[variables('rtsubnetRef')]",
-                "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'16')]", //change to 6
+                "ipAddress": "[concat(variables('rtvmPrivateIPAddresPrefix'),'6')]", //change to 6 - it was 16
                 "vmSize": "[parameters('vmSize')]",
                 "publisher": "Canonical",
                 "offer": "UbuntuServer",
@@ -892,21 +893,41 @@
             "comments": "Default Network Security Group for Windows endpoints",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-08-01",
-            "name": "[variables('nsg-default-name')]", //rename to nsg-win-default-name
+            "name": "[variables('nsg-default-name')]", 
             "location": "[parameters('location')]",
             "properties": {
                 "securityRules": [ 
                     {
-                        "name": "default-allow-3389",
+                        "name": "AllowSshRdpInbound",
                         "properties": {
                             "priority": 100,
                             "access": "Allow",
                             "direction": "Inbound",
-                            "destinationPortRange": "3389",
+                            "destinationPortRanges": [
+                                "22",
+                                "3389"
+                            ],
+                            //"destinationPortRange": "3389",
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
                             "sourceAddressPrefix": "[parameters('allowedIPAddresses')]",
                             "destinationAddressPrefix": "*"
+                        }
+                    },
+                    {
+                        "name": "AllowSshRdpOutbound",
+                        "properties": {
+                            "priority": 100,
+                            "access": "Allow",
+                            "direction": "Outbound",
+                            "destinationPortRanges": [
+                                "22",
+                                "3389"
+                            ],
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "VirtualNetwork"
                         }
                     }
                 ]
