@@ -889,7 +889,24 @@
             "kind": "Storage",
             "properties": {}
         },
-
+        {   
+            //Firewall Policy
+            "type": "Microsoft.Network/firewallPolicies",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('azFirewallPolicyName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "tags": {},
+            "properties": {
+                "sku": {
+                    "tier": "Premium"
+                },
+                "threatIntelMode": "Alert",
+                "intrusionDetection": {
+                    "mode": "Off"
+                }
+            }
+        },
 
         {
             //This NSG is created only when Remote Access Mode is selected. Needs a Public IP only /////----------duplicate this and create a NSG for Linux SSH
