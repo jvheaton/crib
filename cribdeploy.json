@@ -889,38 +889,7 @@
             "kind": "Storage",
             "properties": {}
         },
-        {
-            //Firwall Premium
-            "type": "Microsoft.Network/azureFirewalls",
-            "apiVersion": "2020-11-01",
-            "name": "[variables('azFirewallName')]",
-            "location":"[parameters('location')]",
-                  "dependsOn": [
-                        "[resourceId('Microsoft.Network/publicIpAddresses', variables('azFirewallPublicIPName'))]",
-                        "[resourceId('Microsoft.Network/virtualNetworks/', variables('hbvirtualNetworkName'))]",
-                        //"[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAzFwSubnetName'))]",
-                        "[resourceId('Microsoft.Network/firewallPolicies', variables('azFirewallPolicyName'))]",
-                        "[resourceId('Microsoft.Network/applicationGateways', variables('azAppGatewayName'))]"
-                    ],
-            "tags": {},
-            "properties": {
-                "sku": {
-                    "name": "AZFW_VNet",
-                    "tier": "Premium"
-                },
-                "threatIntelMode": "Alert",
-                "additionalProperties": {},
-                "ipConfigurations": [
 
-                ],
-                "networkRuleCollections": [],
-                "applicationRuleCollections": [],
-                "natRuleCollections": [],
-                "firewallPolicy": {
-                    "id": "[resourceId('Microsoft.Network/firewallPolicies',variables('azFirewallPolicyName'))]"
-                }
-            }
-        },
         {   
             //Firewall Policy
             "type": "Microsoft.Network/firewallPolicies",
