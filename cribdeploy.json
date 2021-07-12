@@ -897,8 +897,8 @@
             "location":"[parameters('location')]",
                   "dependsOn": [
                         "[resourceId('Microsoft.Network/publicIpAddresses', variables('azFirewallPublicIPName'))]",
-                        "[resourceId('Microsoft.Network/virtualNetworks/', variables('hbvirtualNetworkName'))]",
-                        //"[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAzFwSubnetName'))]",
+                        //"[resourceId('Microsoft.Network/virtualNetworks/', variables('hbvirtualNetworkName'))]",
+                        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAzFwSubnetName'))]",
                         "[resourceId('Microsoft.Network/firewallPolicies', variables('azFirewallPolicyName'))]",
                         "[resourceId('Microsoft.Network/applicationGateways', variables('azAppGatewayName'))]"
                     ],
@@ -910,7 +910,19 @@
                 },
                 "threatIntelMode": "Alert",
                 "additionalProperties": {},
-                "ipConfigurations": [],
+                "ipConfigurations": [
+                    {
+                        "name": "[variables('azFirewallPublicIPName')]",
+                        "properties": {
+                        "subnet": {
+                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('hbvirtualNetworkName'), variables('hbAzFwSubnetName'))]"
+                        },
+                        "publicIPAddress": {
+                            "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('azFirewallPublicIPName'))]"
+                        }
+                        }
+                    }
+                ],
                 "networkRuleCollections": [],
                 "applicationRuleCollections": [],
                 "natRuleCollections": [],
