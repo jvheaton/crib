@@ -1190,7 +1190,7 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-default-name'))]",
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-bastion-host-name'))]",
-                "[resourceId('Microsoft.Network/routeTables', variables('udrRed2Blue'))]"
+                "[resourceId('Microsoft.Network/routeTables', variables('udrBlue2Red'))]"
             ],
             "properties": {
                 "addressSpace": {
