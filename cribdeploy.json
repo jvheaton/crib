@@ -861,8 +861,8 @@
         "AppFWPrivIP": "[concat(variables('seperatedFWSubnetAddressPrefix_p1')[0],'.',variables('seperatedFWSubnetAddressPrefix_p1')[1],'.',variables('seperatedFWSubnetAddressPrefix_p1')[2],'.',string(add(int(variables('seperatedFWSubnetAddressPrefix_p2')[0]),4)))]",
 
         
-        "udrBlue2Red": "udr-bt-2-rt",
-        "udrRed2Blue": "udr-rt-2-bt",
+        "udrBlue2Red": "udrbt2rt",
+        "udrRed2Blue": "udrrt2bt",
         
         //Certificates
         "smbSharedFolder": "Setup",
