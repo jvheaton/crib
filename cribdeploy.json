@@ -63,7 +63,7 @@
             "defaultValue": "P@ssword0123", // clean password from code
             "minLength": 12,
             "metadata": {
-                "description": "Password for the all Virtual machines. The password must be at least 12 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter"
+                "description": "Password for the all Virtual machines, also used as SSH Key if option is selected. The password must be at least 12 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter"
             }
         },
         "linuxAuthenticationType": {
@@ -74,15 +74,15 @@
                 "password"
             ],
             "metadata": {
-                "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+                "description": "Type of authentication to use on the Linux Virtual Machine. SSH key is recommended."
             }
         },
-        "linuxAdminPasswordOrKey": {
-            "type": "securestring",
-            "metadata": {
-                "description": "SSH Key or password for the Virtual Machine. SSH key is recommended. The password must be at least 8 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
-            }
-        },
+        //"linuxAdminPasswordOrKey": {
+        //    "type": "securestring",
+        //    "metadata": {
+        //       "description": "SSH Key or password for the Virtual Machine. SSH key is recommended. The password must be at least 8 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+        //    }
+        //},
         "adfsUsername": {
             "type": "string",
             "defaultValue": "gastori",
@@ -422,7 +422,7 @@
             },
             "defaultValue": "rtsnet"
         },
-        "hbSubnetRange": {
+        "hbAzFwSubnetRange": {
             "type": "string",
             "metadata": {
                 "description": "Address Range of the subnet"
@@ -541,7 +541,7 @@
         "rtsubnetName": "[parameters('rtsubnetName')]",
         "rtsubnetRange": "[parameters('rtsubnetRange')]",
         "hbAzFwSubnetName": "[parameters('hbAzFwSubnetName')]",
-        "hbsubnetRange": "[parameters('hbsubnetRange')]",
+        "hbFwSubnetRange": "[parameters('hbAzFwSubnetRange')]",
         "hbAGTWsubnetName": "[parameters('hbAGTWsubnetName')]",
         "hbAGTWsubnetRange": "[parameters('hbAGTWsubnetRange')]",
         "btvmPrivateIPPrefixArray": "[take(split(variables('btsubnetRange'),'.'),3)]",
@@ -560,7 +560,10 @@
                 "name": "[variables('btsubnetName')]",
                 "properties": {
                     "addressPrefix": "[variables('btsubnetRange')]",
-                    "networkSecurityGroup": "[variables('networkSecurityGroup')]"
+                    "networkSecurityGroup": "[variables('networkSecurityGroup')]",
+                    "routeTable": {
+                    "id": "[resourceId('Microsoft.Network/routeTables', variables('udrBlue2Red'))]"
+                    }
                 }
             }
         ],
@@ -569,7 +572,10 @@
                 "name": "[variables('rtsubnetName')]",
                 "properties": {
                     "addressPrefix": "[variables('rtsubnetRange')]",
-                    "networkSecurityGroup": "[variables('networkSecurityGroup')]"
+                    "networkSecurityGroup": "[variables('networkSecurityGroup')]",
+                    "routeTable": {
+                    "id": "[resourceId('Microsoft.Network/routeTables', variables('udrRed2Blue'))]"
+                    }
                 }
             }
         ],
@@ -577,7 +583,7 @@
             {
                 "name": "[variables('hbAzFwSubnetName')]",
                 "properties": {
-                    "addressPrefix": "[variables('hbsubnetRange')]"
+                    "addressPrefix": "[variables('hbFwSubnetRange')]"
                 }
             },
             {
@@ -818,7 +824,7 @@
                 "publicKeys": [
                     {
                         "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-                        "keyData": "[parameters('linuxAdminPasswordOrKey')]"
+                        "keyData": "[parameters('adminPassword')]"
                     }
                 ]
             }
@@ -847,10 +853,16 @@
         "domainNameArray": "[split(parameters('domainFQDN'),'.')]",
         "workstationsOUPath": "[concat('OU=Workstations; DC=', variables('domainNameArray')[0], '; DC=', variables('domainNameArray')[1])]",
         "serversOUPath": "[concat('OU=Servers; DC=', variables('domainNameArray')[0], '; DC=', variables('domainNameArray')[1])]",
-        "seperatedATGSubnetAddressPrefix_p1": "[split(variables('hbAGTWsubnetRange'),'.')]",
-        "seperatedATGSubnetAddressPrefix_p2": "[split(variables('seperatedATGSubnetAddressPrefix_p1')[3],'/')]",
-        "AppGTWPrivIP": "[concat(variables('seperatedATGSubnetAddressPrefix_p1')[0],'.',variables('seperatedATGSubnetAddressPrefix_p1')[1],'.',variables('seperatedATGSubnetAddressPrefix_p1')[2],'.',string(add(int(variables('seperatedATGSubnetAddressPrefix_p2')[0]),5)))]",
+        "seperatedAPGSubnetAddressPrefix_p1": "[split(variables('hbAGTWsubnetRange'),'.')]",
+        "seperatedAPGSubnetAddressPrefix_p2": "[split(variables('seperatedAPGSubnetAddressPrefix_p1')[3],'/')]",
+        "AppGTWPrivIP": "[concat(variables('seperatedAPGSubnetAddressPrefix_p1')[0],'.',variables('seperatedAPGSubnetAddressPrefix_p1')[1],'.',variables('seperatedAPGSubnetAddressPrefix_p1')[2],'.',string(add(int(variables('seperatedAPGSubnetAddressPrefix_p2')[0]),5)))]",
+        "seperatedFWSubnetAddressPrefix_p1": "[split(variables('hbFwSubnetRange'),'.')]",
+        "seperatedFWSubnetAddressPrefix_p2": "[split(variables('seperatedFWSubnetAddressPrefix_p1')[3],'/')]",
+        "AppFWPrivIP": "[concat(variables('seperatedFWSubnetAddressPrefix_p1')[0],'.',variables('seperatedFWSubnetAddressPrefix_p1')[1],'.',variables('seperatedFWSubnetAddressPrefix_p1')[2],'.',string(add(int(variables('seperatedFWSubnetAddressPrefix_p2')[0]),4)))]",
+
         
+        "udrBlue2Red": "udr-bt-2-rt",
+        "udrRed2Blue": "udr-rt-2-bt",
         
         //Certificates
         "smbSharedFolder": "Setup",
@@ -907,9 +919,8 @@
                 }
             }
         },
-
-
         {
+            //Firewall Policy Rule(s)
             "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
             "apiVersion": "2020-11-01",
             "name": "[concat(variables('azFirewallPolicyName'), '/DefaultNetworkRuleCollectionGroup')]",
@@ -1013,7 +1024,6 @@
                 }
             }
         },
-
         {
             //This NSG is created only when Remote Access Mode is selected. Needs a Public IP only /////----------duplicate this and create a NSG for Linux SSH
             "condition": "[equals(parameters('remoteAccessMode'), 'AllowPublicIP')]", 
@@ -1060,6 +1070,49 @@
                 ]
             }
         },
+        //Route Tables
+        {
+            "type": "Microsoft.Network/routeTables",
+            "apiVersion": "2019-02-01",
+            "name": "[variables('udrBlue2Red')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "properties": {
+                "disableBgpRoutePropagation": false,
+                "routes": [
+                {
+                    "name": "Route-2-RedTeam",
+                    "properties": {
+                    "addressPrefix": "[variables('rtsubnetRange')]",
+                    "nextHopType": "VirtualAppliance",
+                    "nextHopIpAddress": "[variables('AppFWPrivIP')]"
+                    }
+                }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/routeTables",
+            "apiVersion": "2019-02-01",
+            "name": "[variables('udrRed2Blue')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "properties": {
+                "disableBgpRoutePropagation": false,
+                "routes": [
+                {
+                    "name": "Route-2-BlueTeam",
+                    "properties": {
+                    "addressPrefix": "[variables('btsubnetRange')]",
+                    "nextHopType": "VirtualAppliance",
+                    "nextHopIpAddress": "[variables('AppFWPrivIP')]"
+                    }
+                }
+                ]
+            }
+        },
+
+
         {
             //This NSG is created when Az Bastion is selected as a remote connectivity option only
             "condition": "[equals(parameters('remoteAccessMode'), 'AzureBastionHost')]", 
