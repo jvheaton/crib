@@ -376,16 +376,16 @@
         },
         "dataRetention": {
             "type": "int",
-            "defaultValue": 30,
+            "defaultValue": 90,
             "minValue": 7,
             "maxValue": 730,
             "metadata": {
                 "description": "Number of days of retention. Workspaces in the legacy Free pricing tier can only have 7 days."
             }
         },
-        "immediatePurgeDataOn30Days": {
+        "immediatePurgeDataOn30Days": { // remove this .. not needed
             "type": "bool",
-            "defaultValue": true,
+            "defaultValue": false,
             "metadata": {
                 "description": "If set to true when changing retention to 30 days, older data will be immediately deleted. Use this with extreme caution. This only applies when retention is being set to 30 days."
             }
@@ -936,6 +936,7 @@
             "AD FS/Admin"
         ],
         "dataConnectors": [
+            "AzureActivityLog",
             "SecurityEvents",
             "MicrosoftThreatProtection",
             "AzureActiveDirectory",
@@ -1036,7 +1037,49 @@
                 }
             }
         },
-
+        {
+            "type": "microsoft.aadiam/diagnosticSettings",
+            "apiVersion": "2017-04-01",
+            "name": "[variables('aadDiagnosticSettingName')]",
+            "dependsOn": [
+                "deployAzureSentinel"
+            ],
+            "properties": {
+                "workspaceId": "[if(empty(parameters('workspaceId')), concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.operationalinsights/workspaces/', reference('deployAzureSentinel').outputs.workspaceName.value), concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.operationalinsights/workspaces/', parameters('workspaceName')))]",//parameters('workspaceId'))]",
+                "logAnalyticsDestinationType": null,
+                "logs": [
+                    {
+                        "category": "SignInLogs",
+                        "enabled": true
+                    },
+                    {
+                        "category": "AuditLogs",
+                        "enabled": true
+                    },
+                    {
+                        "category": "NonInteractiveUserSignInLogs",
+                        "enabled": true
+                    },
+                    {
+                        "category": "ServicePrincipalSignInLogs",
+                        "enabled":  true
+                    },
+                    {
+                        "category": "ManagedIdentitySignInLogs",
+                        "enabled":  true
+                    },
+                    {
+                        "category": "ProvisioningLogs",
+                        "enabled":  true
+                    },
+                    {
+                        "category": "ADFSSignInLogs",
+                        "enabled":  true
+                    }
+                ],
+                "metrics": []
+            }
+        },
         {
             "name": "enableDataConnectors",
             "type": "Microsoft.Resources/deployments",
@@ -1044,7 +1087,7 @@
             "resourceGroup": "[resourceGroup().name]",
             "subscriptionId": "[subscription().subscriptionId]",
             "dependsOn": [
-                //"[variables('aadDiagnosticSettingName')]"
+                "[variables('aadDiagnosticSettingName')]"
             ],
             "properties": {
                 "mode": "Incremental",
