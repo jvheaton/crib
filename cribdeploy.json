@@ -390,6 +390,19 @@
                 "description": "If set to true when changing retention to 30 days, older data will be immediately deleted. Use this with extreme caution. This only applies when retention is being set to 30 days."
             }
         },
+        "securityCollectionTier": {
+            "type": "string",
+            "metadata": {
+                "description": "Tier for gathering Windows Security Events."
+            },
+            "allowedValues": [
+                "All",
+                "Recommended",
+                "Minimal",
+                "None"
+            ],
+            "defaultValue": "All"
+        },
         "btVirtualNetworkName": {
             "type": "string",
             "metadata": {
@@ -670,6 +683,10 @@
         "installAADConnectTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/mainenvconfiguration/installAADConnect.json', parameters('_artifactsLocationSasToken')))]",
         "deploySentinel": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/sentinel/sentineldeploy.json', parameters('_artifactsLocationSasToken')))]",
         "windatasources": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/sentinel/log-analytics/winDataSources.json', parameters('_artifactsLocationSasToken')))]",
+        "allconnectors": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/sentinel/data-connectors/allConnectors.json', parameters('_artifactsLocationSasToken')))]",
+        "scheduledAlerts": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/sentinel/alerts/scheduledAlerts.json', parameters('_artifactsLocationSasToken')))]",
+        "IdentityWorkbookARM": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/sentinel/workbooks/IdentityWorkbookARM.json', parameters('_artifactsLocationSasToken')))]",
+
         "deployC2Uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/deployC2.json', parameters('_artifactsLocationSasToken')))]",
         
         // Custom Scripts
@@ -918,6 +935,19 @@
             "Microsoft-Windows-PowerShell/Operational",
             "AD FS/Admin"
         ],
+        "dataConnectors": [
+            "SecurityEvents",
+            "MicrosoftThreatProtection",
+            "AzureActiveDirectory",
+            "Office365"
+        ],
+        "specificScheduledAlerts": [
+            "ADFS DKM Master Key Export",
+            "New access credential added to Application or Service Principal",
+            "Credential added after admin consented to Application",
+            "First access credential added to Application or Service Principal where no credential was present",
+            "Mail.Read Permissions Granted to Application"
+        ],
         "aadDiagnosticSettingName": "[concat('AADConnector-',uniqueString(subscription().subscriptionId,resourceGroup().name,parameters('utcValue')))]",
         
         //Certificates
@@ -1008,45 +1038,84 @@
         },
 
         {
-            "type": "microsoft.aadiam/diagnosticSettings",
-            "apiVersion": "2017-04-01",
-            "name": "[variables('aadDiagnosticSettingName')]",
+            "name": "enableDataConnectors",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "subscriptionId": "[subscription().subscriptionId]",
+            "dependsOn": [
+                //"[variables('aadDiagnosticSettingName')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('allconnectors')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "workspaceName": {
+                        "value":  "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceName.value, parameters('workspaceName'))]"
+                    },
+                    "workspaceId": {
+                        "value": "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceIdOutput.value, parameters('workspaceId'))]"
+                    },
+                    "dataConnectors": {
+                        "value": "[variables('dataConnectors')]"
+                    },
+                    "securityCollectionTier": {
+                        "value": "[parameters('securityCollectionTier')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "enableScheduledAlerts",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "subscriptionId": "[subscription().subscriptionId]",
+            "dependsOn": [
+                "enableDataConnectors"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('scheduledAlerts')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "workspaceName": {
+                        "value": "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceName.value, parameters('workspaceName'))]"
+                    },
+                    "dataConnectors": {
+                        "value": "[variables('dataConnectors')]"
+                    },
+                    "specificScheduledAlerts": {
+                        "value": "[variables('specificScheduledAlerts')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "SentinelWorkbook",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "subscriptionId": "[subscription().subscriptionId]",
             "dependsOn": [
                 "deployAzureSentinel"
             ],
             "properties": {
-                "workspaceId": "[if(empty(parameters('workspaceId')), concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.operationalinsights/workspaces/', reference('deployAzureSentinel').outputs.workspaceName.value), parameters('workspaceId'))]",
-                "logs": [
-                    {
-                        "category": "SignInLogs",
-                        "enabled": true
-                    },
-                    {
-                        "category": "AuditLogs",
-                        "enabled": true
-                    },
-                    {
-                        "category": "NonInteractiveUserSignInLogs",
-                        "enabled": true
-                    },
-                    {
-                        "category": "ServicePrincipalSignInLogs",
-                        "enabled":  true
-                    },
-                    {
-                        "category": "ManagedIdentitySignInLogs",
-                        "enabled":  true
-                    },
-                    {
-                        "category": "ProvisioningLogs",
-                        "enabled":  true
-                    },
-                    {
-                        "category": "ADFSSignInLogs",
-                        "enabled":  true
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('IdentityWorkbookARM')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "workspaceName": {
+                        "value": "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceName.value, parameters('workspaceName'))]"
                     }
-                ],
-                "metrics": []
+                }
             }
         },
 
