@@ -917,7 +917,7 @@
             "Microsoft-Windows-PowerShell/Operational",
             "AD FS/Admin"
         ],
-        "aadDiagnosticSettingName": "[concat('AADConnector-',uniqueString(resourceGroup().subscriptionId,resourceGroup().name,parameters('utcValue')))]",
+        "aadDiagnosticSettingName": "[concat('AADConnector-',uniqueString(subscription().subscriptionId,resourceGroup().name,parameters('utcValue')))]",
         
         //Certificates
         "smbSharedFolder": "Setup",
@@ -953,7 +953,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2020-10-01",
             "resourceGroup": "[resourceGroup().name]",
-            "subscriptionId": "[resourceGroup().subscriptionId]",
+            "subscriptionId": "[subscription().subscriptionId]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -985,7 +985,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2020-10-01",
             "resourceGroup": "[resourceGroup().name]",
-            "subscriptionId": "[resourceGroup().subscriptionId]",
+            "subscriptionId": "[subscription().subscriptionId]",
             "dependsOn": [
                 "deployAzureSentinel"
             ],
@@ -1014,7 +1014,7 @@
                 "deployAzureSentinel"
             ],
             "properties": {
-                "workspaceId": "[if(empty(parameters('workspaceId')), concat('/subscriptions/', resourceGroup().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.operationalinsights/workspaces/', reference('deployAzureSentinel2Go').outputs.workspaceName.value), parameters('workspaceId'))]",
+                "workspaceId": "[if(empty(parameters('workspaceId')), concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.operationalinsights/workspaces/', reference('deployAzureSentinel2Go').outputs.workspaceName.value), parameters('workspaceId'))]",
                 "logs": [
                     {
                         "category": "SignInLogs",
