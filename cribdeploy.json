@@ -1040,7 +1040,8 @@
         {
             "type": "microsoft.aadiam/diagnosticSettings",
             "apiVersion": "2017-04-01",
-            "name": "[variables('aadDiagnosticSettingName')]",
+            "name": "cribAADDiagSettingsAADConnect",
+            //"name": "[variables('aadDiagnosticSettingName')]",
             "dependsOn": [
                 "deployAzureSentinel"
             ],
