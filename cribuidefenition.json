@@ -214,7 +214,13 @@
                             "validationMessage": "Enables Scheduled rules matching any of the selected connectors"
                         },
                         "visible": true
-                    }
+                    },
+                    {
+                        "name": "element1",
+                        "type": "Microsoft.Common.TagsByResource",
+                        "label": "Enable Scheduled alert rules for selected connectors?",
+  
+                      }
                 ]
             }
         ],
@@ -226,7 +232,7 @@
             "securityCollectionTier": "[steps('dataConnectors').securityCollectionTier]",
             "mcasDiscoveryLogs": "[steps('dataConnectors').mcasDiscoveryLogs]",
             "location": "[location()]",
-            //"tagsByResource": "[steps('tags').tagsByResource]",
+            "tagsByResource": "[steps('tags').tagsByResource]",
             "enableFusionAlert": "[steps('analyticsRules').enableFusionAlert]",
             "enableMicrosoftAlerts": "[steps('analyticsRules').enableMicrosoftAlerts]",
             "enableMLAlerts": "[steps('analyticsRules').enableMLAlerts]",
