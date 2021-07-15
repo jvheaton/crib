@@ -1,4 +1,4 @@
-{//crin
+{
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
@@ -338,18 +338,56 @@
                 "description": "Size of the virtual machine. Reference: https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-general"
             }
         },
+        "workspaceName": {
+            "type": "string",
+            "defaultValue": "CRiBSentinel",
+            "metadata": {
+                "description": "Name for the Log Analytics workspace used to aggregate data. If this is a new LA workspace, the template will add a unique string to the name you choose. If you are using an existing LA workspace, the name will not change and will be passed as is to the resources in the template."
+            }
+        },
         "workspaceId": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Log analytics workspace ID"
+                "description": "Log analytics workspace ID. Leave it empty if you are deploying a new LA workspace."
             }
         },
         "workspaceKey": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Log analytics workspace keys"
+                "description": "Log analytics workspace keys. Leave it empty if you are deploying a new LA workspace."
+            }
+        },
+        "pricingTier": {
+            "type": "string",
+            "allowedValues": [
+                "PerGB2018",
+                "Free",
+                "Standalone",
+                "PerNode",
+                "Standard",
+                "Premium"
+            ],
+            "defaultValue": "PerGB2018",
+            "metadata": {
+                "description": "Pricing tier: pergb2018 or legacy tiers (Free, Standalone, PerNode, Standard or Premium) which are not available to all customers."
+            }
+        },
+        "dataRetention": {
+            "type": "int",
+            "defaultValue": 30,
+            "minValue": 7,
+            "maxValue": 730,
+            "metadata": {
+                "description": "Number of days of retention. Workspaces in the legacy Free pricing tier can only have 7 days."
+            }
+        },
+        "immediatePurgeDataOn30Days": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "If set to true when changing retention to 30 days, older data will be immediately deleted. Use this with extreme caution. This only applies when retention is being set to 30 days."
             }
         },
         "btVirtualNetworkName": {
@@ -623,13 +661,15 @@
         "hballSubnets": "[variables('hbsubnets')]",
 
         // Nested Templates
-        "updateDNSServerScript": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet-dns-server.json', parameters('_artifactsLocationSasToken')))]",
-        "sysmonInstallTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/sysmonInstall.json', parameters('_artifactsLocationSasToken')))]",
-        "createADTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/createADForest.json', parameters('_artifactsLocationSasToken')))]",
-        "joinDomainTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/joinDomain.json', parameters('_artifactsLocationSasToken')))]",
-        "installADFSTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/installADFS.json', parameters('_artifactsLocationSasToken')))]",
-        "importPfxCertTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/importPfxCert.json', parameters('_artifactsLocationSasToken')))]",
-        "installAADConnectTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/installAADConnect.json', parameters('_artifactsLocationSasToken')))]",
+        "updateDNSServerScript": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/misc/vnet-dns-server.json', parameters('_artifactsLocationSasToken')))]",
+        "sysmonInstallTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/misc/sysmonInstall.json', parameters('_artifactsLocationSasToken')))]",
+        "createADTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/mainenvconfiguration/createADForest.json', parameters('_artifactsLocationSasToken')))]",
+        "joinDomainTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/mainenvconfiguration/joinDomain.json', parameters('_artifactsLocationSasToken')))]",
+        "installADFSTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/mainenvconfiguration/installADFS.json', parameters('_artifactsLocationSasToken')))]",
+        "importPfxCertTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/mainenvconfiguration/importPfxCert.json', parameters('_artifactsLocationSasToken')))]",
+        "installAADConnectTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/mainenvconfiguration/installAADConnect.json', parameters('_artifactsLocationSasToken')))]",
+        "deploySentinel": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/sentinel/sentineldeploy.json', parameters('_artifactsLocationSasToken')))]",
+        "windatasources": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/sentinel/log-analytics/winDataSources.json', parameters('_artifactsLocationSasToken')))]",
         "deployC2Uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/deployC2.json', parameters('_artifactsLocationSasToken')))]",
         
         // Custom Scripts
@@ -846,8 +886,8 @@
         // Additional Variables
         "linuxAuthenticationType": "[parameters('linuxAuthenticationType')]",
         "allServers": "[concat(variables('allWinServers'),variables('domainController'), variables('adfsServer'))]",
-        "allBlueTeamEnpoints": "[concat(variables('allWinWKS'), variables('allWinServers'),variables('domainController'), variables('adfsServer'), variables('allUbuntuServers'),variables('allCentOSServers'),variables('allRedHatServers'))]", //rename allendpoints to allBlueTeamEnpoints here and everywere esle
-        "allRedTeamEndpoints": "[concat(variables('kaliLinux'), variables('infectionMonkey'), variables('c2Server'))]",
+        "allBlueTeamWinEndpoints": "[concat(variables('allWinWKS'), variables('allWinServers'),variables('domainController'), variables('adfsServer'))]",
+        "allBlueTeamEnpoints": "[concat(variables('allWinWKS'), variables('allWinServers'),variables('domainController'), variables('adfsServer'), variables('allUbuntuServers'),variables('allCentOSServers'),variables('allRedHatServers'))]",
         "redTeamKaliAndInfectionMonkey": "[concat(variables('kaliLinux'), variables('infectionMonkey'))]",
         "redTeamLinuxAndWindows": "[concat(variables('c2Server'))]",
         "domainNameArray": "[split(parameters('domainFQDN'),'.')]",
@@ -863,6 +903,21 @@
         
         "udrBlue2Red": "udrbt2rt",
         "udrRed2Blue": "udrrt2bt",
+
+        //Sentinel
+        "logAnalyticsFunctions": [
+            "Sysmon"
+        ],
+        "windowsEventLogs": [
+            "System",
+            "Application",
+            "Microsoft-Windows-Sysmon/Operational",
+            "Directory Service",
+            "Windows PowerShell",
+            "Microsoft-Windows-PowerShell/Operational",
+            "AD FS/Admin"
+        ],
+        "aadDiagnosticSettingName": "[concat('AADConnector-',uniqueString(resourceGroup().subscriptionId,resourceGroup().name,parameters('utcValue')))]",
         
         //Certificates
         "smbSharedFolder": "Setup",
@@ -888,7 +943,113 @@
         ],
         "initialDCADFSScripts": "[if(equals(parameters('certificateType'),'TrustedSigned'), concat(variables('initialSetUpScripts'), variables('pfxCertUri')), variables('initialSetUpScripts'))]"
     },
+    // Resource Deployment
     "resources": [
+        {
+            //----------------Deploy and Configure Sentinel---------------------------------------------
+            //Log Analytics and Sentinel
+            "condition": "[and(empty(parameters('workspaceId')),empty(parameters('workspaceKey')))]",
+            "name": "deployAzureSentinel",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "subscriptionId": "[resourceGroup().subscriptionId]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('deploySentinel')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "workspaceName": {
+                        "value": "[parameters('workspaceName')]"
+                    },
+                    "pricingTier": {
+                        "value": "[parameters('pricingTier')]"
+                    },
+                    "dataRetention": {
+                        "value": "[parameters('dataRetention')]"
+                    },
+                    "immediatePurgeDataOn30Days": {
+                        "value": "[parameters('immediatePurgeDataOn30Days')]"
+                    },
+                    "enableLAFunctions": {
+                        "value": "[variables('logAnalyticsFunctions')]"
+                    }
+                }
+            }
+        },
+
+        {
+            "name": "collectWinDataSources",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "subscriptionId": "[resourceGroup().subscriptionId]",
+            "dependsOn": [
+                "deployAzureSentinel"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('windatasources')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "workspaceName": {
+                        "value": "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceName.value, parameters('workspaceName'))]"
+                    },
+                    "winEventProviders": {
+                        "value": "[variables('windowsEventLogs')]"
+                    }
+                }
+            }
+        },
+
+        {
+            "type": "microsoft.aadiam/diagnosticSettings",
+            "apiVersion": "2017-04-01",
+            "name": "[variables('aadDiagnosticSettingName')]",
+            "dependsOn": [
+                "deployAzureSentinel"
+            ],
+            "properties": {
+                "workspaceId": "[if(empty(parameters('workspaceId')), concat('/subscriptions/', resourceGroup().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.operationalinsights/workspaces/', reference('deployAzureSentinel2Go').outputs.workspaceName.value), parameters('workspaceId'))]",
+                "logs": [
+                    {
+                        "category": "SignInLogs",
+                        "enabled": true
+                    },
+                    {
+                        "category": "AuditLogs",
+                        "enabled": true
+                    },
+                    {
+                        "category": "NonInteractiveUserSignInLogs",
+                        "enabled": true
+                    },
+                    {
+                        "category": "ServicePrincipalSignInLogs",
+                        "enabled":  true
+                    },
+                    {
+                        "category": "ManagedIdentitySignInLogs",
+                        "enabled":  true
+                    },
+                    {
+                        "category": "ProvisioningLogs",
+                        "enabled":  true
+                    },
+                    {
+                        "category": "ADFSSignInLogs",
+                        "enabled":  true
+                    }
+                ],
+                "metrics": []
+            }
+        },
+
+        //--------------------End of Deploying Sentinel-------------------------------
         {
             //Storage Account
             "type": "Microsoft.Storage/storageAccounts",
@@ -2541,7 +2702,7 @@
         {
             //Deployment of the enabling MMA on all VMs using linked template
             "condition": "[parameters('enableMonitoringAgent')]",
-            "name": "[concat(variables('allBlueTeamEnpoints')[copyIndex('vmMMASetUpCopy')].vmName, '/OMSExtension')]",
+            "name": "[concat(variables('allBlueTeamWinEndpoints')[copyIndex('vmMMASetUpCopy')].vmName, '/OMSExtension')]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "apiVersion": "2019-12-01",
             "location": "[parameters('location')]",
@@ -2552,7 +2713,7 @@
             ],
             "copy": {
                 "name": "vmMMASetUpCopy",
-                "count": "[length(variables('allBlueTeamEnpoints'))]"
+                "count": "[length(variables('allBlueTeamWinEndpoints'))]"
             },
             "properties": {
                 "publisher": "Microsoft.EnterpriseCloud.Monitoring",
