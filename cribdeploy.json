@@ -939,7 +939,7 @@
             "AzureActivityLog",
             "SecurityEvents",
             "MicrosoftThreatProtection",
-            "AzureActiveDirectory",
+            "AzureActiveDirectoryIdentityProtection",
             "Office365"
         ],
         "specificScheduledAlerts": [
