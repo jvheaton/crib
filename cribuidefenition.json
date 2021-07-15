@@ -218,7 +218,7 @@
                     {
                         "name": "element1",
                         "type": "Microsoft.Common.TagsByResource",
-                        "label": "Enable Scheduled alert rules for selected connectors?",
+                        "label": "Enable Scheduled alert rules for selected connectors?"
   
                       }
                 ]
