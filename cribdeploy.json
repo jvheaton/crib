@@ -1037,11 +1037,11 @@
                 }
             }
         },
+        /*
         {
             "type": "microsoft.aadiam/diagnosticSettings",
             "apiVersion": "2017-04-01",
-            "name": "cribAADDiagSettingsAADConnect",
-            //"name": "[variables('aadDiagnosticSettingName')]",
+            "name": "[variables('aadDiagnosticSettingName')]",
             "dependsOn": [
                 "deployAzureSentinel"
             ],
@@ -1081,6 +1081,7 @@
                 "metrics": []
             }
         },
+        */
         {
             "name": "enableDataConnectors",
             "type": "Microsoft.Resources/deployments",
@@ -1088,7 +1089,6 @@
             "resourceGroup": "[resourceGroup().name]",
             "subscriptionId": "[subscription().subscriptionId]",
             "dependsOn": [
-                "cribAADDiagSettingsAADConnect"
                 //"[variables('aadDiagnosticSettingName')]"
             ],
             "properties": {
