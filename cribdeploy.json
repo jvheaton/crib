@@ -888,6 +888,7 @@
         "allServers": "[concat(variables('allWinServers'),variables('domainController'), variables('adfsServer'))]",
         "allBlueTeamWinEndpoints": "[concat(variables('allWinWKS'), variables('allWinServers'),variables('domainController'), variables('adfsServer'))]",
         "allBlueTeamEnpoints": "[concat(variables('allWinWKS'), variables('allWinServers'),variables('domainController'), variables('adfsServer'), variables('allUbuntuServers'),variables('allCentOSServers'),variables('allRedHatServers'))]",
+        "allRedTeamEndpoints": "[concat(variables('kaliLinux'), variables('infectionMonkey'), variables('c2Server'))]",
         "redTeamKaliAndInfectionMonkey": "[concat(variables('kaliLinux'), variables('infectionMonkey'))]",
         "redTeamLinuxAndWindows": "[concat(variables('c2Server'))]",
         "domainNameArray": "[split(parameters('domainFQDN'),'.')]",
