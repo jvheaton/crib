@@ -1088,7 +1088,8 @@
             "resourceGroup": "[resourceGroup().name]",
             "subscriptionId": "[subscription().subscriptionId]",
             "dependsOn": [
-                "[variables('aadDiagnosticSettingName')]"
+                "cribAADDiagSettingsAADConnect"
+                //"[variables('aadDiagnosticSettingName')]"
             ],
             "properties": {
                 "mode": "Incremental",
