@@ -1015,7 +1015,7 @@
                 "deployAzureSentinel"
             ],
             "properties": {
-                "workspaceId": "[if(empty(parameters('workspaceId')), concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.operationalinsights/workspaces/', reference('deployAzureSentinel2Go').outputs.workspaceName.value), parameters('workspaceId'))]",
+                "workspaceId": "[if(empty(parameters('workspaceId')), concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.operationalinsights/workspaces/', reference('deployAzureSentinel').outputs.workspaceName.value), parameters('workspaceId'))]",
                 "logs": [
                     {
                         "category": "SignInLogs",
