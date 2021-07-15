@@ -37,7 +37,7 @@
             "apiVersion": "2017-04-01",
             "name": "[concat('AADConnector-',uniqueString(parameters('subscriptionId'),parameters('resourceGroup'),parameters('utcValue')))]",
             "properties": {
-                "workspaceId": "[if(empty(parameters('workspaceId')), concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('resourceGroup'), '/providers/microsoft.operationalinsights/workspaces/', reference('deployAzureSentinel2Go').outputs.workspaceName.value), parameters('workspaceId'))]",
+                "workspaceId": "[if(empty(parameters('workspaceId')), concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('resourceGroup'), '/providers/microsoft.operationalinsights/workspaces/', reference('deployAzureSentinel').outputs.workspaceName.value), parameters('workspaceId'))]",
                 "logs": [
                     {
                         "category": "SignInLogs",
