@@ -3,7 +3,7 @@ function Set-AuditRule
     <#
     .SYNOPSIS
 
-    Sets an access control entry (ACE) on a system access control list (SACL) of a file, registry or ad object security descriptor.
+    Sets an Access Control Entry (ACE) on a system access control list (SACL) of a file, registry or ad object security descriptor.
 
     .PARAMETER RegistryPath
 

@@ -2779,7 +2779,8 @@
             "dependsOn": [
                 "vmWKSDomainJoinCopy",
                 "vmWSRVDomainJoinCopy",
-                "InstallADFS"
+                "InstallADFS",
+                "deployAzureSentinel"
             ],
             "copy": {
                 "name": "vmMMASetUpCopy",
@@ -2791,10 +2792,10 @@
                 "typeHandlerVersion": "1.0",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                    "workspaceId": "[parameters('workspaceId')]"
+                    "workspaceId": "[reference('deployAzureSentinel').outputs.workspaceIdOutput.value]"
                 },
                 "protectedSettings": {
-                    "workspaceKey": "[parameters('workspaceKey')]"
+                    "workspaceKey": "[reference('deployAzureSentinel').outputs.workspaceKeyOutput.value]"
                 }
             }
         },

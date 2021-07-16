@@ -282,11 +282,13 @@
         },
         "workspaceIdOutput": {
             "type": "string",
-            "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces/', variables('uniqueWorkspace')), '2015-11-01-preview').customerId]"
+            "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces/', variables('uniqueWorkspace')), '2020-08-01').customerId]"
+            //"value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces/', variables('uniqueWorkspace')), '2015-11-01-preview').customerId]"
         },
         "workspaceKeyOutput": {
             "type": "string",
-            "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', variables('uniqueWorkspace')), '2015-11-01-preview').primarySharedKey]"
+            "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', variables('uniqueWorkspace')), '2020-08-01').primarySharedKey]"
+            //"value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', variables('uniqueWorkspace')), '2015-11-01-preview').primarySharedKey]"
         },
         "workspaceResourceIdOutput": {
             "type": "string",
