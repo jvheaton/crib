@@ -97,7 +97,7 @@
             "metadata": {
                 "description": "Domain users to create after domain is set up."
             },
-            "defaultValue": { //remove clear txt passwords and replace with a secure string parameter
+            "defaultValue": { //remove clear txt passwords and replace with a secure string parameter ..
                 "array": [
                     {"FirstName":"Norah","LastName":"Martha","SamAccountName":"nmartha","Department":"Human Resources","JobTitle":"HR Director","Password":"S@l@m3!123","Identity":"Users","UserContainer":"DomainUsers"},
                     {"FirstName":"Pedro","LastName":"Gustavo","SamAccountName":"pgustavo","Department":"IT Support","JobTitle":"CIO","Password":"W1n1!2019","Identity":"Domain Admins","UserContainer":"DomainUsers"},
