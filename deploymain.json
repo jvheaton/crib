@@ -923,6 +923,8 @@
         "udrRed2Blue": "udrrt2bt",
 
         //Sentinel
+        "uniqueWorkspace": "[if(and(empty(parameters('workspaceName')),empty(parameters('workspaceId'))),concat(parameters('workspaceName'), uniquestring(resourceGroup().id, parameters('utcValue'))),parameters('workspaceName'))]",
+
         "logAnalyticsFunctions": [
             "Sysmon"
         ],
@@ -1043,8 +1045,8 @@
             "apiVersion": "2017-04-01",
             "name": "[variables('aadDiagnosticSettingName')]",
             "dependsOn": [
-                "[resourceId('Microsoft.OperationalInsights/workspaces/',reference('deployAzureSentinel').outputs.workspaceName.value)]"
-                //"deployAzureSentinel"
+                //"[resourceId('Microsoft.OperationalInsights/workspaces/',variables('uniqueWorkspace'))]"
+                "deployAzureSentinel"
             ],
             "properties": {
                 "workspaceId": "[if(empty(parameters('workspaceId')), concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.operationalinsights/workspaces/', reference('deployAzureSentinel').outputs.workspaceName.value), concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.operationalinsights/workspaces/', parameters('workspaceName')))]",//parameters('workspaceId'))]",
