@@ -338,8 +338,7 @@
             "metadata": {
                 "description": "Name for the Log Analytics workspace used to aggregate data. If this is a new LA workspace, the template will add a unique string to the name you choose. If you are using an existing LA workspace, the name will not change and will be passed as is to the resources in the template."
             }
-        }
-        /*
+        },
         "workspaceId": {
             "type": "string",
             "defaultValue": "",
@@ -354,7 +353,6 @@
                 "description": "Log analytics workspace keys. Leave it empty if you are deploying a new LA workspace."
             }
         },
-        */
         "pricingTier": {
             "type": "string",
             "allowedValues": [
@@ -977,7 +975,7 @@
         {
             //----------------Deploy and Configure Sentinel---------------------------------------------
             //Log Analytics and Sentinel
-            //"condition": "[and(empty(parameters('workspaceId')),empty(parameters('workspaceKey')))]",
+            "condition": "[and(empty(parameters('workspaceId')),empty(parameters('workspaceKey')))]",
             "name": "deployAzureSentinel",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2020-10-01",
@@ -1026,8 +1024,7 @@
                 },
                 "parameters": {
                     "workspaceName": {
-                        //"value": "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceName.value, parameters('workspaceName'))]"
-                        "value": "[reference('deployAzureSentinel').outputs.workspaceName.value]"
+                        "value": "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceName.value, parameters('workspaceName'))]"
                     },
                     "winEventProviders": {
                         "value": "[variables('windowsEventLogs')]"
@@ -1052,12 +1049,10 @@
                 },
                 "parameters": {
                     "workspaceName": {
-                        //"value":  "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceName.value, parameters('workspaceName'))]"
-                        "value":  "[reference('deployAzureSentinel').outputs.workspaceName.value]"
+                        "value":  "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceName.value, parameters('workspaceName'))]"
                     },
                     "workspaceId": {
-                        //"value": "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceIdOutput.value, parameters('workspaceId'))]"
-                        "value": "[reference('deployAzureSentinel').outputs.workspaceIdOutput.value]"
+                        "value": "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceIdOutput.value, parameters('workspaceId'))]"
                     },
                     "dataConnectors": {
                         "value": "[variables('dataConnectors')]"
@@ -1085,8 +1080,7 @@
                 },
                 "parameters": {
                     "workspaceName": {
-                        //"value": "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceName.value, parameters('workspaceName'))]"
-                        "value": "[reference('deployAzureSentinel').outputs.workspaceName.value]"
+                        "value": "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceName.value, parameters('workspaceName'))]"
                     },
                     "dataConnectors": {
                         "value": "[variables('dataConnectors')]"
@@ -1114,8 +1108,7 @@
                 },
                 "parameters": {
                     "workspaceName": {
-                        //"value": "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceName.value, parameters('workspaceName'))]"
-                        "value": "[reference('deployAzureSentinel').outputs.workspaceName.value]"
+                        "value": "[if(empty(parameters('workspaceId')), reference('deployAzureSentinel').outputs.workspaceName.value, parameters('workspaceName'))]"
                     }
                 }
             }
