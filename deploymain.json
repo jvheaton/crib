@@ -923,7 +923,7 @@
         "udrRed2Blue": "udrrt2bt",
 
         //Sentinel
-        "uniqueWorkspace": "[if(and(empty(parameters('workspaceName')),empty(parameters('workspaceId'))),concat(parameters('workspaceName'), uniquestring(resourceGroup().id, parameters('utcValue'))),parameters('workspaceName'))]",
+        "uniqueWorkspace": "[if(empty(parameters('workspaceId')),concat(parameters('workspaceName'), uniquestring(resourceGroup().id, parameters('utcValue'))),parameters('workspaceName'))]",
 
         "logAnalyticsFunctions": [
             "Sysmon"
