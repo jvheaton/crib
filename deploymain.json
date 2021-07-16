@@ -951,7 +951,7 @@
             "First access credential added to Application or Service Principal where no credential was present",
             "Mail.Read Permissions Granted to Application"
         ],
-        "aadDiagnosticSettingName": "[concat('AADConnector-',uniqueString(subscription().subscriptionId,resourceGroup().name,parameters('utcValue')))]",
+        "aadDiagnosticSettingName": "[concat('AADConnector_',uniqueString(subscription().subscriptionId,resourceGroup().name,parameters('utcValue')))]",
         
         //Certificates
         "smbSharedFolder": "Setup",
@@ -996,7 +996,8 @@
                 },
                 "parameters": {
                     "workspaceName": {
-                        "value": "[parameters('workspaceName')]"
+                       // "value": "[parameters('workspaceName')]"
+                       "value": "[variables('uniqueWorkspace')]"
                     },
                     "pricingTier": {
                         "value": "[parameters('pricingTier')]"
@@ -1045,8 +1046,8 @@
             "apiVersion": "2017-04-01",
             "name": "[variables('aadDiagnosticSettingName')]",
             "dependsOn": [
-                //"[resourceId('Microsoft.OperationalInsights/workspaces/',variables('uniqueWorkspace'))]"
-                "deployAzureSentinel"
+                "[resourceId('Microsoft.OperationalInsights/workspaces/',variables('uniqueWorkspace'))]"
+                //"deployAzureSentinel"
             ],
             "properties": {
                 "workspaceId": "[if(empty(parameters('workspaceId')), concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.operationalinsights/workspaces/', reference('deployAzureSentinel').outputs.workspaceName.value), concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.operationalinsights/workspaces/', parameters('workspaceName')))]",//parameters('workspaceId'))]",
@@ -1083,8 +1084,9 @@
                 ],
                 "metrics": []
             }
-        },
+        }
         //*/
+        /*
         {
             "name": "enableDataConnectors",
             "type": "Microsoft.Resources/deployments",
@@ -1166,6 +1168,7 @@
                 }
             }
         }
+        */
     ],
     "outputs": {
         "btvirtualNetworkName": {

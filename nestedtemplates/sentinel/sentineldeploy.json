@@ -117,7 +117,8 @@
         }
     },
     "variables": {
-        "uniqueWorkspace": "[concat(parameters('workspaceName'), uniquestring(resourceGroup().id, parameters('utcValue')))]"
+        "uniqueWorkspace": "[parameters('workspaceName')]"
+        //"uniqueWorkspace": "[concat(parameters('workspaceName'), uniquestring(resourceGroup().id, parameters('utcValue')))]"
     },
     "resources": [
         {
